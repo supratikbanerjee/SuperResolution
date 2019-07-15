@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 import torchvision
 import models.modules.module_util as mutil
+import torch.nn.functional as F
+
 
 class Discriminator_VGG_128(nn.Module):
     def __init__(self, in_nc, nf):

@@ -9,6 +9,7 @@
   * opencv
   * pillow
   * pyyaml
+  * visdom
 
 #### Install Dependencies
 ```

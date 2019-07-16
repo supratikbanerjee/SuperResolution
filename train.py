@@ -131,7 +131,8 @@ def main(config):
 		
 		if epoch % config['logger']['chkpt_freq'] == 0:
 			trainer.save(epoch)
-	visualizer.save()
+	if config['use_visdom']:
+		visualizer.save()
 	
 
 if __name__ == '__main__':

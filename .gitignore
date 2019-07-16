@@ -1,0 +1,10 @@
+# Don't track content of these folders
+data/BSDS300/
+data/DIV2K/
+experiments/
+models/__pycache__/
+models/modules/__pycache__/
+
+# Compiled source #
+###################
+*.pyc

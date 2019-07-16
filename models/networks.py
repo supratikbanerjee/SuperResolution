@@ -66,33 +66,15 @@ def define_F(config):
 	netF.eval()
 	return netF
 
-# Pixel Loss
-def pixel_criterion(config):
-	loss = config['pixel_criterion']
+def loss_criterion(loss):
 	if loss == 'l1':
 		criterion = nn.L1Loss()
 	elif loss == 'l2':
 		criterion = nn.MSELoss()
-	else:
-		raise NotImplementedError('Loss type [{:s}] not recognized.'.format(loss))
-	return criterion
-
-# Feature Loss
-def feature_criterion(config):
-	loss = config['feature_criterion']
-	if loss == 'l1':
-		criterion = nn.L1Loss()
-	elif loss == 'l2':
-		criterion = nn.MSELoss()
-	else:
-		raise NotImplementedError('Loss type [{:s}] not recognized.'.format(loss))
-	return criterion
-
-# GAN Loss
-def adversarial_loss(config):
-	loss = config['gan_type']
-	if loss == 'ragan' or 'gan':
+	elif loss == 'BCEL':
 		criterion = nn.BCEWithLogitsLoss()
+	elif loss == 'BCEL':
+		criterion = nn.BCELoss()
 	else:
 		raise NotImplementedError('Loss type [{:s}] not recognized.'.format(loss))
 	return criterion

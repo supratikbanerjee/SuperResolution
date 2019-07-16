@@ -33,7 +33,7 @@ network_G:
   layers: 16
 
 network_D:
-  model: discriminator_vgg_128
+  model: LeakyVGG
   in_nc: 3
   nf: 64
 #### training settings: learning rate scheme, loss
@@ -56,6 +56,7 @@ train:
   pixel_weight: !!float 1e0
   feature_criterion: l2
   feature_weight: !!float 6e-3
+  adversarial_criterion: BCEL
   gan_type: gan  # gan | ragan
   gan_weight: !!float 1e-3
   feature_extractor: vgg19

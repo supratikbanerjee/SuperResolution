@@ -21,9 +21,9 @@ class GAN():
 		self.netD = networks.define_D(self.config).to(self.device)
 		self.netF = networks.define_F(self.config).to(self.device)
 
-		self.pixel_criterion = networks.pixel_criterion(train_config).to(self.device)
-		self.adversarial_criterion = networks.adversarial_loss(train_config).to(self.device)
-		self.feature_criterion = networks.feature_criterion(train_config).to(self.device)
+		self.pixel_criterion = networks.loss_criterion(train_config['pixel_criterion']).to(self.device)
+		self.adversarial_criterion = networks.loss_criterion(train_config['adversarial_criterion']).to(self.device)
+		self.feature_criterion = networks.loss_criterion(train_config['feature_criterion']).to(self.device)
 
 		self.pixel_weight = train_config['pixel_weight']
 		self.adversarial_weight = train_config['gan_weight']

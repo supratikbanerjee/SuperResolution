@@ -173,6 +173,10 @@ def mod_crop(im, scale):
 # metric
 ####################
 
+# proSR implmentation 
+# https://arxiv.org/abs/1804.02900 
+# https://github.com/fperazzi/proSR
+
 def eval_psnr_and_ssim(im1, im2, scale):
     im1_t = np.atleast_3d(img_as_float(im1))
     im2_t = np.atleast_3d(img_as_float(im2))
@@ -207,6 +211,8 @@ def eval_psnr_and_ssim(im1, im2, scale):
 
     return psnr_val, ssim_val
 
+# BasicSR implementation 
+# https://github.com/xinntao/BasicSR
     
 def calculate_psnr(img1, img2):
     # img1 and img2 have range [0, 255]
@@ -260,6 +266,7 @@ def calculate_ssim(img1, img2):
             return ssim(np.squeeze(img1), np.squeeze(img2))
     else:
         raise ValueError('Wrong input image dimensions.')
+
 
 def eval_psnr_ssim(sr_img, gt_img, crop_size):
     gt_img = gt_img / 255.

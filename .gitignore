@@ -1,8 +1,5 @@
 # Don't track content of these folders
-data/BSDS300/
-data/DIV2K/
-data/datasets/BSDS300/
-data/datasets/DIV2K/
+data/datasets/
 experiments/
 models/__pycache__/
 models/modules/__pycache__/

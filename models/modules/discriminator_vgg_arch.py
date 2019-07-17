@@ -38,7 +38,6 @@ class Discriminator_VGG_128(nn.Module):
 
         # activation function
         self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
-        self.softmax = nn.Softmax()
 
     def forward(self, x):
         fea = self.lrelu(self.conv0_0(x))
@@ -59,7 +58,7 @@ class Discriminator_VGG_128(nn.Module):
         fea = fea.view(fea.size(0), -1)
         fea = self.lrelu(self.linear1(fea))
         out = self.linear2(fea)
-        return self.softmax(out)
+        return out
 
 
 class VGGFeatureExtractor(nn.Module):

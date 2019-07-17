@@ -1,6 +1,8 @@
 #### general settings
-name: SRGAN
-model: srgan
+name: SRGAN_Test_Exp_01
+use_visdom: true
+visdom_port: 8086
+model: gan
 device: cuda
 
 #### datasets
@@ -8,14 +10,18 @@ dataset:
   scale: 2
   train:
     name: DIV2K
-    data_location: data/DIV2K/train/
+    mean: [0.4488, 0.4371, 0.404]
+    stddev: [0.0039215, 0.0039215, 0.0039215]
+    data_location: data/datasets/DIV2K/train/
     shuffle: true
     n_workers: 6  # per GPU
-    batch_size: 50
+    batch_size: 32
     size: 128
   test:
     name: DIV2K
-    data_location: data/DIV2K/test/
+    mean: [0.4488, 0.4371, 0.404]
+    stddev: [0.0039215, 0.0039215, 0.0039215]
+    data_location: data/datasets/DIV2K/test/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1
@@ -29,19 +35,13 @@ network_G:
   nf: 64
   nb: 16
   upscale: 2
-
 network_D:
   model: discriminator_vgg_128
   in_nc: 3
   nf: 64
-
-checkpoint:
-  frequency: !!float 1e1
-  path: checkpoint/SRGAN/
-
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 100
+  epoch: 1000
 
   lr_G: !!float 1e-4
   weight_decay_G: 0
@@ -55,18 +55,24 @@ train:
   lr_step: 10
   lr_gamma: 0.5
 
-  content_loss: l2
-  content_weight: !!float 1e0
-  perceptual_loss: l2
-  perceptual_weight: !!float 6e-3
-  gan_type: ragan  # gan | ragan
-  gan_weight: !!float 1e-3
-  feature_extractor: vgg19_bn
+  pixel_criterion: l1
+  pixel_weight: !!float 1e-2
+  feature_criterion: l1
+  feature_weight: 1
+  adversarial_criterion: BCEL
+  gan_type: gan  # gan | ragan
+  gan_weight: !!float 5e-3
+  feature_extractor: vgg19
+
+  real_weightD: 1
+  fake_weightD: 1
 
   manual_seed: 10
-  val_freq: !!float 1e3
+  val_freq: 10 # epoch
 
 #### logger
 logger:
-  print_freq: 100
+  print_freq: 100 # iter
   path: experiments/
+  chkpt_freq: 10 # epoch
+  

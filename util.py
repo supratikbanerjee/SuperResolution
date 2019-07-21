@@ -139,12 +139,15 @@ def tensor2img(tensor, out_type=np.uint8, min_max=(0, 1)):
     #tensor = tensor.squeeze().float().cpu().clamp_(*min_max)  # clamp
     #tensor = (tensor - min_max[0]) / (min_max[1] - min_max[0]) 
     img_np = tensor.numpy()
-    img_np = (np.transpose(img_np[[2, 1, 0], :, :], (1, 2, 0))) # HWC, BGR
+    img_np = np.transpose(img_np[[2, 1, 0], :, :], (1, 2, 0)) # HWC, BGR
     if out_type == np.uint8:
         img_np = (img_np * 255.0).round()
     img_np = img_np.clip(0, 255)
     return img_np.astype(out_type)
 
+def Tensor2np(tensor, rgb_range=1):
+    array = np.transpose(quantize(tensor, rgb_range).numpy(), (1, 2, 0)).astype(np.uint8)
+    return array
 
 def tensor2im(image_tensor, mean=(0.5, 0.5, 0.5), stddev=2.):
     image_numpy = image_tensor.numpy()
@@ -167,6 +170,11 @@ def mod_crop(im, scale):
     h, w = im.shape[:2]
     # return im[(h % scale):, (w % scale):, ...]
     return im[:h - (h % scale), :w - (w % scale), ...]
+
+def quantize(img, rgb_range):
+    pixel_range = 255. / rgb_range
+    # return img.mul(pixel_range).clamp(0, 255).round().div(pixel_range)
+    return img.mul(pixel_range).clamp(0, 255).round()
 
 
 ####################
@@ -210,6 +218,37 @@ def eval_psnr_and_ssim(im1, im2, scale):
         sigma=1.5)
 
     return psnr_val, ssim_val
+
+def eval_psnr_ssim(sr_img, gt_img, crop_size):
+    gt_img = gt_img / 255.
+    sr_img = sr_img / 255.
+    cropped_sr_img = sr_img[crop_size:-crop_size, crop_size:-crop_size, :]
+    cropped_gt_img = gt_img[crop_size:-crop_size, crop_size:-crop_size, :]
+    psnr = calculate_psnr(cropped_sr_img * 255, cropped_gt_img * 255)
+    ssim = calculate_ssim(cropped_sr_img * 255, cropped_gt_img * 255)
+    return psnr, ssim
+
+def calc_metrics(img1, img2, crop_border, test_Y=True):
+    #
+    img1 = img1 / 255.
+    img2 = img2 / 255.
+
+    im1_in = img1
+    im2_in = img2
+    height, width = img1.shape[:2]
+    # print(height, width)
+    if im1_in.ndim == 3:
+        cropped_im1 = im1_in[crop_border:height-crop_border, crop_border:width-crop_border, :]
+        cropped_im2 = im2_in[crop_border:height-crop_border, crop_border:width-crop_border, :]
+    elif im1_in.ndim == 2:
+        cropped_im1 = im1_in[crop_border:height-crop_border, crop_border:width-crop_border]
+        cropped_im2 = im2_in[crop_border:height-crop_border, crop_border:width-crop_border]
+    else:
+        raise ValueError('Wrong image dimension: {}. Should be 2 or 3.'.format(im1_in.ndim))
+
+    psnr = calculate_psnr(cropped_im1 * 255, cropped_im2 * 255)
+    ssim = calculate_ssim(cropped_im1 * 255, cropped_im2 * 255)
+    return psnr, ssim
 
 # BasicSR implementation 
 # https://github.com/xinntao/BasicSR
@@ -266,13 +305,3 @@ def calculate_ssim(img1, img2):
             return ssim(np.squeeze(img1), np.squeeze(img2))
     else:
         raise ValueError('Wrong input image dimensions.')
-
-
-def eval_psnr_ssim(sr_img, gt_img, crop_size):
-    gt_img = gt_img / 255.
-    sr_img = sr_img / 255.
-    cropped_sr_img = sr_img[crop_size:-crop_size, crop_size:-crop_size, :]
-    cropped_gt_img = gt_img[crop_size:-crop_size, crop_size:-crop_size, :]
-    psnr = calculate_psnr(cropped_sr_img * 255, cropped_gt_img * 255)
-    ssim = calculate_ssim(cropped_sr_img * 255, cropped_gt_img * 255)
-    return psnr, ssim

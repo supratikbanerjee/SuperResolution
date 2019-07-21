@@ -9,23 +9,23 @@ device: cuda
 dataset:
   scale: 2
   train:
-    name: DIV2K
-    mean: [0.4488, 0.4371, 0.404]
-    stddev: [0.0039215, 0.0039215, 0.0039215]
-    data_location: data/datasets/DIV2K/train/
-    shuffle: true
-    n_workers: 4  # per GPU
+    scale: 2
+    mode: LRHR
+    dataroot_HR: data/datasets/DIV2Kx2/hr/train
+    dataroot_LR: data/datasets/DIV2Kx2/lr/train
+    data_type: npy
+    n_workers: 4
     batch_size: 20
-    size: 32
+    LR_size: 32
+    use_flip: true
+    use_rot: true
+    noise: .
   test:
-    name: Set5
-    mean: [0.4488, 0.4371, 0.404]
-    stddev: [0.0039215, 0.0039215, 0.0039215]
-    data_location: data/datasets/Set5/test/
-    shuffle: false
-    n_workers: 1  # per GPU
-    batch_size: 1
-    size: 320
+    scale: 2
+    mode: LRHR
+    dataroot_HR: data/datasets/Set5x2/hr/test
+    dataroot_LR: data/datasets/Set5x2/lr/test
+    data_type: img 
 
 #### network structures
 network_G:

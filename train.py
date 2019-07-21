@@ -8,7 +8,8 @@ import yaml
 import util
 from data import dataset
 from models import create_model
-
+from data import create_dataloader
+from data import create_dataset
 
 def main(config):
 	device = torch.device(config['device'])
@@ -39,8 +40,26 @@ def main(config):
 	util.set_random_seed(seed)
 
 	###### Load Dataset #####
-	training_data_loader = dataset.get_train_set(config['dataset'])
-	testing_data_loader = dataset.get_test_set(config['dataset'])
+	#training_data_loader = dataset.get_train_set(config['dataset'])
+	#testing_data_loader = dataset.get_test_set(config['dataset'])
+	for phase, dataset_opt in sorted(config['dataset'].items()):
+		if phase == 'train':
+			train_set = create_dataset(dataset_opt, phase)
+			training_data_loader = create_dataloader(train_set, dataset_opt, phase)
+			print('===> Train Dataset: %s   Number of images: [%d]' % (train_set.name(), len(train_set)))
+			if training_data_loader is None: raise ValueError("[Error] The training data does not exist")
+
+		elif phase == 'test':
+			val_set = create_dataset(dataset_opt, phase)
+			testing_data_loader = create_dataloader(val_set, dataset_opt, phase)
+			print('===> Val Dataset: %s   Number of images: [%d]' % (val_set.name(), len(val_set)))
+			
+		elif phase == 'scale':
+			pass
+
+		else:
+			raise NotImplementedError("[Error] Dataset phase [%s] in *.json is not recognized." % phase)
+
 
 	train_size = len(training_data_loader)
 	test_size = len(testing_data_loader)
@@ -49,11 +68,11 @@ def main(config):
 	epochs = config['train']['epoch']
 	total_iters = epochs * train_size
 
-	logger.log('Training Dataset {:s} Loaded.'.format(config['dataset']['train']['name']))
+	#logger.log('Training Dataset {:s} Loaded.'.format(config['dataset']['train']['name']))
 	logger.log('Number of train images: {:,d}, iters: {:,d}'.format(num_images, train_size))
 	logger.log('Total iters: {:d} for {:,d} epochs'.format(total_iters, epochs))
 
-	logger.log('Validation Dataset {:s} Loaded.'.format(config['dataset']['test']['name']))
+	#logger.log('Validation Dataset {:s} Loaded.'.format(config['dataset']['test']['name']))
 	logger.log('Number of validation images: {:,d}'.format(test_size))
 
 	trainer = create_model(config, logger)
@@ -99,7 +118,8 @@ def main(config):
 			idx = 0
 			for i, batch in enumerate(testing_data_loader):
 				idx += 1
-				img_name = batch[2][0][batch[2][0].rindex('/')+1:]
+				img_name = batch[2][0][batch[2][0].rindex('\\')+1:]
+				# print(img_name)
 				img_name = img_name[:img_name.index('.')]
 				img_dir = experiment_dir+'/val_image/'+img_name
 				util.mkdir(img_dir)
@@ -108,9 +128,10 @@ def main(config):
 				sr_img = util.tensor2img(visuals['SR'])  # uint8
 				gt_img = util.tensor2img(visuals['HR'])  # uint8
 				save_img_path = os.path.join(img_dir, '{:s}_{:d}.png'.format(img_name, total_steps))
+
 				util.save_img(sr_img, save_img_path)
 				crop_size = config['dataset']['scale']
-				psnr, ssim = util.eval_psnr_ssim(sr_img, gt_img, crop_size) 
+				psnr, ssim = util.calc_metrics(sr_img, gt_img, crop_size) 
 				avg_psnr += psnr
 				avg_ssim += ssim
 			avg_psnr = avg_psnr / idx

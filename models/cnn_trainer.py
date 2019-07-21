@@ -19,7 +19,7 @@ class CNN():
 		# define model
 		self.netG = networks.define_G(self.config).to(self.device)
 
-		self.pixel_criterion = networks.pixel_criterion(train_config).to(self.device)
+		self.pixel_criterion = networks.loss_criterion(train_config['pixel_criterion']).to(self.device)
 
 		self.pixel_weight = train_config['pixel_weight']
 

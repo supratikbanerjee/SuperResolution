@@ -1,0 +1,61 @@
+#### general settings
+name: DDBPN_TEST_EXP_01
+use_visdom: false
+visdom_port: 8067
+model: cnn
+device: cuda
+
+#### datasets
+dataset:
+  scale: 2
+  train:
+    name: DIV2K
+    mean: [0.4488, 0.4371, 0.404]
+    stddev: [0.0039215, 0.0039215, 0.0039215]
+    data_location: data/datasets/DIV2K/train/
+    shuffle: true
+    n_workers: 6  # per GPU
+    batch_size: 16
+    size: 48
+  test:
+    name: Set5
+    mean: [0.4488, 0.4371, 0.404]
+    stddev: [0.0039215, 0.0039215, 0.0039215]
+    data_location: data/datasets/BSDS300/test/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    size: 320
+
+#### network structures
+network_G:
+  model: DDBPN
+  num_features: 64
+  in_channels: 3
+  out_channels: 3
+  num_blocks: 7
+
+#### training settings: learning rate scheme, loss
+train:
+  epoch: 100
+
+  lr_G: !!float 1e-4
+  weight_decay_G: 0
+  beta1_G: 0.9
+  beta2_G: 0.99
+
+  lr_step: 10
+  lr_gamma: 0.5
+
+  pixel_criterion: l2
+  pixel_weight: !!float 1e0
+
+  manual_seed: 10
+  val_freq: 6 # epoch
+
+#### logger
+logger:
+  print_freq: 80 # iter
+  path: experiments/
+  chkpt_freq: 2 # epoch
+  

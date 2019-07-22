@@ -72,9 +72,9 @@ class RCAN(nn.Module):
         act = nn.ReLU(True)
         
         # RGB mean for DIV2K
-        rgb_mean = (0.4488, 0.4371, 0.4040)
-        rgb_std = (1.0, 1.0, 1.0)
-        self.sub_mean = common.MeanShift(rgb_range, rgb_mean, rgb_std)
+        #rgb_mean = (0.4488, 0.4371, 0.4040)
+        #rgb_std = (1.0, 1.0, 1.0)
+        #self.sub_mean = common.MeanShift(rgb_range, rgb_mean, rgb_std)
         
         # define head module
         modules_head = [conv(in_channels, num_features, kernel_size)]
@@ -92,21 +92,21 @@ class RCAN(nn.Module):
             common.Upsampler(conv, scale, num_features, act=False),
             conv(num_features, out_channels, kernel_size)]
 
-        self.add_mean = common.MeanShift(rgb_range, rgb_mean, rgb_std, 1)
+        #self.add_mean = common.MeanShift(rgb_range, rgb_mean, rgb_std, 1)
 
         self.head = nn.Sequential(*modules_head)
         self.body = nn.Sequential(*modules_body)
         self.tail = nn.Sequential(*modules_tail)
 
     def forward(self, x):
-        x = self.sub_mean(x)
+        #x = self.sub_mean(x)
         x = self.head(x)
 
         res = self.body(x)
         res += x
 
         x = self.tail(res)
-        x = self.add_mean(x)
+        #x = self.add_mean(x)
 
         return x 
 

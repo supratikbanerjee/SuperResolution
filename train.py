@@ -73,6 +73,7 @@ def main(config):
 	logger.log('Start training from epoch: {:d}, iter: {:d}'.format(start_epoch, total_steps))
 	iter_start_time = time.time()
 	for epoch in range(start_epoch, epochs+1):
+		print()
 		with tqdm(total=train_size, desc='Epoch: [%d/%d]'%(epoch, epochs), miniters=1) as t:
 			for i, batch in enumerate(training_data_loader):
 				trainer.train(batch)

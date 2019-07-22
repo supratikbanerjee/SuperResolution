@@ -37,7 +37,7 @@ network_G:
 
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 100
+  epoch: 1000
 
   lr_G: !!float 1e-4
   weight_decay_G: 0

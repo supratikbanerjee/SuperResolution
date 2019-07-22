@@ -1,6 +1,6 @@
 #### general settings
 name: SRGAN_Test_Exp_01
-use_visdom: true
+use_visdom: false
 visdom_port: 8086
 model: gan
 device: cuda
@@ -10,22 +10,19 @@ dataset:
   scale: 2
   train:
     name: DIV2K
-    mean: [0.4488, 0.4371, 0.404]
-    stddev: [0.0039215, 0.0039215, 0.0039215]
     data_location: data/datasets/DIV2K/train/
     shuffle: true
     n_workers: 6  # per GPU
     batch_size: 32
     size: 128
+    repeat: 1
   test:
-    name: DIV2K
-    mean: [0.4488, 0.4371, 0.404]
-    stddev: [0.0039215, 0.0039215, 0.0039215]
-    data_location: data/datasets/DIV2K/test/
+    name: Set5
+    data_location: data/datasets/Set5/test/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1
-    size: 1000
+    repeat: 1
 
 #### network structures
 network_G:
@@ -68,11 +65,11 @@ train:
   fake_weightD: 1
 
   manual_seed: 10
-  val_freq: 10 # epoch
+  val_freq: 1 # epoch
 
 #### logger
 logger:
-  print_freq: 100 # iter
+  print_freq: 5 # epoch
   path: experiments/
   chkpt_freq: 10 # epoch
   

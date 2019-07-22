@@ -96,7 +96,7 @@ class GAN():
 		#return total_loss_d.item()
 
 	def train(self, batch):
-		self.lr_input, self.hr_real = Variable(batch[0].to(self.device)), Variable(batch[1].to(self.device))
+		self.lr_input, self.hr_real = Variable(batch[0].squeeze().to(self.device)), Variable(batch[1].squeeze().to(self.device))
 		self.hr_fake = self.netG(self.lr_input)
 		self.train_generator()
 		self.train_discriminator()
@@ -137,9 +137,9 @@ class GAN():
 		param['G'] = sum(map(lambda x: x.numel(), self.netG.parameters()))
 		param['D'] = sum(map(lambda x: x.numel(), self.netD.parameters()))
 		param['F'] = sum(map(lambda x: x.numel(), self.netF.parameters()))
-		logger.log('Network G : {:s}, with parameters: {:,d}'.format(self.config['network_G']['model'], param['G']))
-		logger.log('Network D : {:s}, with parameters: {:,d}'.format(self.config['network_D']['model'], param['D']))
-		logger.log('Network F : {:s}, with parameters: {:,d}'.format(self.config['train']['feature_extractor'], param['F']))
+		logger.log('Network G : {:s}, with parameters: [{:,d}]'.format(self.config['network_G']['model'], param['G']))
+		logger.log('Network D : {:s}, with parameters: [{:,d}]'.format(self.config['network_D']['model'], param['D']))
+		logger.log('Network F : {:s}, with parameters: [{:,d}]'.format(self.config['train']['feature_extractor'], param['F']))
 
 
 	def get_current_visuals(self):

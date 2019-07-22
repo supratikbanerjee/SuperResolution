@@ -10,22 +10,19 @@ dataset:
   scale: 2
   train:
     name: BSDS300
-    mean: [0.4488, 0.4371, 0.404]
-    stddev: [0.0039215, 0.0039215, 0.0039215]
     data_location: data/datasets/BSDS300/train/
     shuffle: true
     n_workers: 6  # per GPU
     batch_size: 5
     size: 128
+    repeat: 2
   test:
     name: BSDS300
-    mean: [0.4488, 0.4371, 0.404]
-    stddev: [0.0039215, 0.0039215, 0.0039215]
     data_location: data/datasets/BSDS300/test/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1
-    size: 320
+    repeat: 1
 
 #### network structures
 network_G:
@@ -69,7 +66,7 @@ train:
 
 #### logger
 logger:
-  print_freq: 80 # iter
+  print_freq: 5 # epoch
   path: experiments/
   chkpt_freq: 2 # epoch
   

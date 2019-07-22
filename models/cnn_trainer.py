@@ -45,7 +45,7 @@ class CNN():
 		return torch.empty_like(input).fill_(target)
 
 	def train(self, batch):
-		self.lr_input, self.hr_real = Variable(batch[0].to(self.device)), Variable(batch[1].to(self.device))
+		self.lr_input, self.hr_real = Variable(batch[0].squeeze().to(self.device)), Variable(batch[1].squeeze().to(self.device))
 		self.netG.train()
 		self.netG.zero_grad()
 		self.hr_fake = self.netG(self.lr_input)
@@ -77,7 +77,7 @@ class CNN():
 	def print_network_params(self, logger):
 		param = OrderedDict()
 		param['G'] = sum(map(lambda x: x.numel(), self.netG.parameters()))
-		logger.log('Network G : {:s}, with parameters: {:,d}'.format(self.config['network_G']['model'], param['G']))
+		logger.log('Network G : {:s}, with parameters: [{:,d}]'.format(self.config['network_G']['model'], param['G']))
 		
 	def get_current_visuals(self):
 		visuals = OrderedDict()

@@ -8,8 +8,8 @@ import yaml
 import util
 from data import dataset
 from models import create_model
-from data import create_dataloader
-from data import create_dataset
+from tqdm import tqdm
+
 
 def main(config):
 	device = torch.device(config['device'])
@@ -32,34 +32,12 @@ def main(config):
 	##### print Experiment Config
 	logger.log(util.dict2str(config))
 
-	##### Random Seed #####
-	seed = config['train']['manual_seed']
-	if seed is None:
-		seed = random.randint(1, 10000)
-	logger.log('Random seed: {}'.format(seed))
-	util.set_random_seed(seed)
-
 	###### Load Dataset #####
-	#training_data_loader = dataset.get_train_set(config['dataset'])
-	#testing_data_loader = dataset.get_test_set(config['dataset'])
-	for phase, dataset_opt in sorted(config['dataset'].items()):
-		if phase == 'train':
-			train_set = create_dataset(dataset_opt, phase)
-			training_data_loader = create_dataloader(train_set, dataset_opt, phase)
-			print('===> Train Dataset: %s   Number of images: [%d]' % (train_set.name(), len(train_set)))
-			if training_data_loader is None: raise ValueError("[Error] The training data does not exist")
+	training_data_loader = dataset.get_train_set(config['dataset'])
+	logger.log('Training Dataset {:s} Loaded.'.format(config['dataset']['train']['name']))
 
-		elif phase == 'test':
-			val_set = create_dataset(dataset_opt, phase)
-			testing_data_loader = create_dataloader(val_set, dataset_opt, phase)
-			print('===> Val Dataset: %s   Number of images: [%d]' % (val_set.name(), len(val_set)))
-			
-		elif phase == 'scale':
-			pass
-
-		else:
-			raise NotImplementedError("[Error] Dataset phase [%s] in *.json is not recognized." % phase)
-
+	testing_data_loader = dataset.get_test_set(config['dataset'])
+	logger.log('Validation Dataset {:s} Loaded.'.format(config['dataset']['test']['name']))
 
 	train_size = len(training_data_loader)
 	test_size = len(testing_data_loader)
@@ -68,11 +46,18 @@ def main(config):
 	epochs = config['train']['epoch']
 	total_iters = epochs * train_size
 
-	#logger.log('Training Dataset {:s} Loaded.'.format(config['dataset']['train']['name']))
+	##### Random Seed #####
+	seed = config['train']['manual_seed']
+	if seed is None:
+		seed = random.randint(1, 10000)
+	logger.log('Random seed: {}'.format(seed))
+	util.set_random_seed(seed)
+
+
 	logger.log('Number of train images: {:,d}, iters: {:,d}'.format(num_images, train_size))
 	logger.log('Total iters: {:d} for {:,d} epochs'.format(total_iters, epochs))
 
-	#logger.log('Validation Dataset {:s} Loaded.'.format(config['dataset']['test']['name']))
+	
 	logger.log('Number of validation images: {:,d}'.format(test_size))
 
 	trainer = create_model(config, logger)
@@ -88,25 +73,27 @@ def main(config):
 	logger.log('Start training from epoch: {:d}, iter: {:d}'.format(start_epoch, total_steps))
 	iter_start_time = time.time()
 	for epoch in range(start_epoch, epochs+1):
+		with tqdm(total=train_size, desc='Epoch: [%d/%d]'%(epoch, epochs), miniters=1) as t:
+			for i, batch in enumerate(training_data_loader):
+				trainer.train(batch)
+				t.update()
+				total_steps += 1
 
-		for i, batch in enumerate(training_data_loader):
-			trainer.train(batch)
-			total_steps += 1
-			if total_steps % print_freq == 0:
-				t = time.time() - iter_start_time
-				logs = trainer.get_logs()
-				message = '[ Train - epoch:{}, iter:{}, time:{:.3f} ] '.format(epoch, total_steps, t)
-				for k, v in logs.items():
-					message += '{:s}: {:.4f} '.format(k, v)
-				logger.log(message)
-				if config['use_visdom']:
-					visuals = trainer.get_current_visuals()
-					visuals['LR'] = util.tensor2img(visuals['LR'])
-					visuals['SR'] = util.tensor2img(visuals['SR'])
-					visuals['HR'] = util.tensor2img(visuals['HR'])
-					visualizer.display_current_results(visuals, epoch)
-					trainer.plot_loss(visualizer, epoch)
-				iter_start_time = time.time()
+		if epoch % print_freq == 0:
+			tt = time.time() - iter_start_time
+			logs = trainer.get_logs()
+			message = '[ Train - epoch:{}, iter:{}, time:{:.3f} ] '.format(epoch, total_steps, tt)
+			for k, v in logs.items():
+				message += '{:s}: {:.4f} '.format(k, v)
+			logger.log(message, screen=False)
+			if config['use_visdom']:
+				visuals = trainer.get_current_visuals()
+				visuals['LR'] = util.tensor2img(visuals['LR'])
+				visuals['SR'] = util.tensor2img(visuals['SR'])
+				visuals['HR'] = util.tensor2img(visuals['HR'])
+				visualizer.display_current_results(visuals, epoch)
+				trainer.plot_loss(visualizer, epoch)
+			iter_start_time = time.time()
 
         ##### Start Validation #####
 		if epoch % val_freq == 0:
@@ -118,7 +105,7 @@ def main(config):
 			idx = 0
 			for i, batch in enumerate(testing_data_loader):
 				idx += 1
-				img_name = batch[2][0][batch[2][0].rindex('\\')+1:]
+				img_name = batch[2][0][batch[2][0].rindex('/')+1:]
 				# print(img_name)
 				img_name = img_name[:img_name.index('.')]
 				img_dir = experiment_dir+'/val_image/'+img_name
@@ -127,11 +114,11 @@ def main(config):
 				visuals = trainer.get_current_visuals()
 				sr_img = util.tensor2img(visuals['SR'])  # uint8
 				gt_img = util.tensor2img(visuals['HR'])  # uint8
-				save_img_path = os.path.join(img_dir, '{:s}_{:d}.png'.format(img_name, total_steps))
+				save_img_path = os.path.join(img_dir, '{:d}_{:s}_{:d}.png'.format(epoch, img_name, total_steps))
 
 				util.save_img(sr_img, save_img_path)
 				crop_size = config['dataset']['scale']
-				psnr, ssim = util.calc_metrics(sr_img, gt_img, crop_size) 
+				psnr, ssim = util.eval_psnr_and_ssim(sr_img, gt_img, crop_size) 
 				avg_psnr += psnr
 				avg_ssim += ssim
 			avg_psnr = avg_psnr / idx
@@ -149,6 +136,7 @@ def main(config):
 			best_eval = trainer.get_eval()
 			logger_val.log('[ Best - psnr_epoch:{}, psnr:{:.4f}, ssim_epoch:{} ssim: {:.4f}]'.format(
                     best_eval['psnr_epoch'], best_eval['psnr'], best_eval['ssim_epoch'], best_eval['ssim']))
+			iter_start_time = time.time()
 		
 		if epoch % config['logger']['chkpt_freq'] == 0:
 			trainer.save(epoch)

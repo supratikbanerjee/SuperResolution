@@ -14,10 +14,12 @@ from skimage.measure import compare_psnr, compare_ssim
 
 
 class Logger():
+    # logger_name: Name of the logging class. Useful when creating multiple logger classes
+    # root: directory to store the log file
+    # phase: training or validation... used as name for lg file 
     def __init__(self, logger_name, root, phase):
         self.logger_name = logger_name
         self.log_file = os.path.join(root, phase + '_{}.log'.format(get_timestamp()))
-        #self.file_handler = open(self.log_file, mode='a+')
 
     def log(self, message, screen=True, file=True):
         timestamp = get_log_timestamp()
@@ -136,24 +138,12 @@ def set_random_seed(seed):
 
 
 def tensor2img(tensor, out_type=np.uint8, min_max=(0, 1)):
-    #tensor = tensor.squeeze().float().cpu().clamp_(*min_max)  # clamp
-    #tensor = (tensor - min_max[0]) / (min_max[1] - min_max[0]) 
     img_np = tensor.numpy()
     img_np = np.transpose(img_np[[2, 1, 0], :, :], (1, 2, 0)) # HWC, BGR
     if out_type == np.uint8:
         img_np = (img_np * 255.0).round()
     img_np = img_np.clip(0, 255)
     return img_np.astype(out_type)
-
-def Tensor2np(tensor, rgb_range=1):
-    array = np.transpose(quantize(tensor, rgb_range).numpy(), (1, 2, 0)).astype(np.uint8)
-    return array
-
-def tensor2im(image_tensor, mean=(0.5, 0.5, 0.5), stddev=2.):
-    image_numpy = image_tensor.numpy()
-    image_numpy = (np.transpose(image_numpy, (1, 2, 0)) * stddev + np.array(mean)) * 255.0
-    image_numpy = image_numpy.clip(0, 255)
-    return np.around(image_numpy).astype(np.uint8)
 
 
 def save_img(img, img_path, mode='RGB'):
@@ -171,11 +161,28 @@ def mod_crop(im, scale):
     # return im[(h % scale):, (w % scale):, ...]
     return im[:h - (h % scale), :w - (w % scale), ...]
 
-def quantize(img, rgb_range):
-    pixel_range = 255. / rgb_range
-    # return img.mul(pixel_range).clamp(0, 255).round().div(pixel_range)
-    return img.mul(pixel_range).clamp(0, 255).round()
-
+def m_rgb2ycbcr(img, only_y=True):
+    '''same as matlab rgb2ycbcr
+    only_y: only return Y channel
+    Input:
+        uint8, [0, 255]
+        float, [0, 1]
+    '''
+    in_img_type = img.dtype
+    img.astype(np.float32)
+    if in_img_type != np.uint8:
+        img *= 255.
+    # convert
+    if only_y:
+        rlt = np.dot(img, [65.481, 128.553, 24.966]) / 255.0 + 16.0
+    else:
+        rlt = np.matmul(img, [[65.481, -37.797, 112.0], [128.553, -74.203, -93.786],
+                                [24.966, 112.0, -18.214]]) / 255.0 + [16, 128, 128]
+    if in_img_type == np.uint8:
+        rlt = rlt.round()
+    else:
+        rlt /= 255.
+    return rlt.astype(in_img_type)
 
 ####################
 # metric
@@ -219,22 +226,21 @@ def eval_psnr_and_ssim(im1, im2, scale):
 
     return psnr_val, ssim_val
 
-def eval_psnr_ssim(sr_img, gt_img, crop_size):
-    gt_img = gt_img / 255.
-    sr_img = sr_img / 255.
-    cropped_sr_img = sr_img[crop_size:-crop_size, crop_size:-crop_size, :]
-    cropped_gt_img = gt_img[crop_size:-crop_size, crop_size:-crop_size, :]
-    psnr = calculate_psnr(cropped_sr_img * 255, cropped_gt_img * 255)
-    ssim = calculate_ssim(cropped_sr_img * 255, cropped_gt_img * 255)
-    return psnr, ssim
+# SRFBN implementation
+# https://arxiv.org/abs/1903.09814
+# https://github.com/Paper99/SRFBN_CVPR19
 
 def calc_metrics(img1, img2, crop_border, test_Y=True):
     #
     img1 = img1 / 255.
     img2 = img2 / 255.
 
-    im1_in = img1
-    im2_in = img2
+    if test_Y and img1.shape[2] == 3:  # evaluate on Y channel in YCbCr color space
+        im1_in = m_rgb2ycbcr(img1)
+        im2_in = m_rgb2ycbcr(img2)
+    else:
+        im1_in = img1
+        im2_in = img2
     height, width = img1.shape[:2]
     # print(height, width)
     if im1_in.ndim == 3:
@@ -252,6 +258,15 @@ def calc_metrics(img1, img2, crop_border, test_Y=True):
 
 # BasicSR implementation 
 # https://github.com/xinntao/BasicSR
+
+def eval_psnr_ssim(sr_img, gt_img, crop_size):
+    gt_img = gt_img / 255.
+    sr_img = sr_img / 255.
+    cropped_sr_img = sr_img[crop_size:-crop_size, crop_size:-crop_size, :]
+    cropped_gt_img = gt_img[crop_size:-crop_size, crop_size:-crop_size, :]
+    psnr = calculate_psnr(cropped_sr_img * 255, cropped_gt_img * 255)
+    ssim = calculate_ssim(cropped_sr_img * 255, cropped_gt_img * 255)
+    return psnr, ssim
     
 def calculate_psnr(img1, img2):
     # img1 and img2 have range [0, 255]

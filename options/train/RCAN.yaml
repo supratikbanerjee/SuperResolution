@@ -10,22 +10,19 @@ dataset:
   scale: 2
   train:
     name: DIV2K
-    mean: [0.4488, 0.4371, 0.404]
-    stddev: [0.0039215, 0.0039215, 0.0039215]
     data_location: data/datasets/DIV2K/train/
     shuffle: true
     n_workers: 6  # per GPU
     batch_size: 16
     size: 48
+    repeat: 2
   test:
     name: Set5
-    mean: [0.4488, 0.4371, 0.404]
-    stddev: [0.0039215, 0.0039215, 0.0039215]
-    data_location: data/datasets/BSDS300/test/
+    data_location: data/datasets/Set5/test/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1
-    size: 320
+    repeat: 1
 
 #### network structures
 network_G:
@@ -55,11 +52,11 @@ train:
   pixel_weight: !!float 1e0
 
   manual_seed: 10
-  val_freq: 6 # epoch
+  val_freq: 5 # epoch
 
 #### logger
 logger:
-  print_freq: 80 # iter
+  print_freq: 5 # epoch
   path: experiments/
   chkpt_freq: 2 # epoch
   

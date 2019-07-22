@@ -1,5 +1,5 @@
 #### general settings
-name: DDBPN_TEST_EXP_01
+name: RDN_TEST_EXP_01
 use_visdom: false
 visdom_port: 8067
 model: cnn
@@ -9,35 +9,33 @@ device: cuda
 dataset:
   scale: 2
   train:
-    scale: 2
-    mode: LRHR
-    dataroot_HR: data/datasets/DIV2Kx2/hr/train
-    dataroot_LR: data/datasets/DIV2Kx2/lr/train
-    data_type: npy
-    n_workers: 4
+    name: DIV2K
+    data_location: data/datasets/DIV2K/train/
+    shuffle: true
+    n_workers: 6  # per GPU
     batch_size: 20
-    LR_size: 32
-    use_flip: true
-    use_rot: true
-    noise: .
+    size: 32
+    repeat: 2
   test:
-    scale: 2
-    mode: LRHR
-    dataroot_HR: data/datasets/Set5x2/hr/test
-    dataroot_LR: data/datasets/Set5x2/lr/test
-    data_type: img 
+    name: Set5
+    data_location: data/datasets/Set5/test/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    repeat: 1
 
 #### network structures
 network_G:
-  model: DDBPN
+  model: RDN
   num_features: 64
   in_channels: 3
   out_channels: 3
-  num_blocks: 7
+  num_blocks: 16
+  num_layers: 8
 
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 1000
+  epoch: 100
 
   lr_G: !!float 1e-4
   weight_decay_G: 0
@@ -47,15 +45,15 @@ train:
   lr_step: 10
   lr_gamma: 0.5
 
-  pixel_criterion: l1
+  pixel_criterion: l2
   pixel_weight: !!float 1e0
 
   manual_seed: 10
-  val_freq: 1 # epoch
+  val_freq: 5 # epoch
 
 #### logger
 logger:
-  print_freq: 50 # iter
+  print_freq: 5 # epoch
   path: experiments/
   chkpt_freq: 2 # epoch
   

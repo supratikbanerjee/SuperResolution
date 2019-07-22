@@ -10,6 +10,7 @@
   * pillow
   * pyyaml
   * visdom
+  * tqdm
 
 #### Install Dependencies
 ```
@@ -28,4 +29,7 @@ conda install -c conda-forge visdom
 
 # Install pyyaml
 conda install -c conda-forge pyyaml
+
+# Install tqdm
+conda install -c conda-forge tqdm
 ```

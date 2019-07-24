@@ -45,7 +45,7 @@ class CNN():
 		return torch.empty_like(input).fill_(target)
 
 	def train(self, batch):
-		self.lr_input, self.hr_real = Variable(batch[0].squeeze().to(self.device)), Variable(batch[1].squeeze().to(self.device))
+		self.lr_input, self.hr_real = Variable(batch[0].to(self.device)), Variable(batch[1].to(self.device))
 		self.netG.train()
 		self.netG.zero_grad()
 		self.hr_fake = self.netG(self.lr_input)

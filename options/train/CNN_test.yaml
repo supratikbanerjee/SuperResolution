@@ -1,6 +1,6 @@
 #### general settings
 name: CNN_TEST_01
-use_visdom: true
+use_visdom: false
 visdom_port: 8067
 model: cnn
 device: cuda
@@ -10,15 +10,15 @@ dataset:
   scale: 2
   train:
     name: BSDS300
-    data_location: data/BSDS300/train/
+    data_location: data/datasets/BSDS300/train/
     shuffle: true
     n_workers: 6  # per GPU
     batch_size: 5
-    size: 128
+    lr_size: 128
     repeat: 2
   test:
     name: BSDS300
-    data_location: data/BSDS300/test/
+    data_location: data/datasets/BSDS300/test/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1

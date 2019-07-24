@@ -12,9 +12,9 @@ dataset:
     name: DIV2K
     data_location: data/datasets/DIV2K/train/
     shuffle: true
-    n_workers: 5  # per GPU
+    n_workers: 1  # per GPU
     batch_size: 20
-    size: 32
+    lr_size: 32
     repeat: 2
   test:
     name: Set5
@@ -34,7 +34,7 @@ network_G:
 
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 100
+  epoch: 2500
 
   lr_G: !!float 1e-4
   weight_decay_G: 0
@@ -48,11 +48,11 @@ train:
   pixel_weight: !!float 1e0
 
   manual_seed: 10
-  val_freq: 10 # epoch
+  val_freq: 1 # epoch
 
 #### logger
 logger:
-  print_freq: 5 # epoch
+  print_freq: 1 # epoch
   path: experiments/
-  chkpt_freq: 2 # epoch
+  chkpt_freq: 10 # epoch
   

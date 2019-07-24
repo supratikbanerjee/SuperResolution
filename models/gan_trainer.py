@@ -96,7 +96,7 @@ class GAN():
 		#return total_loss_d.item()
 
 	def train(self, batch):
-		self.lr_input, self.hr_real = Variable(batch[0].squeeze().to(self.device)), Variable(batch[1].squeeze().to(self.device))
+		self.lr_input, self.hr_real = Variable(batch[0].to(self.device)), Variable(batch[1].to(self.device))
 		self.hr_fake = self.netG(self.lr_input)
 		self.train_generator()
 		self.train_discriminator()

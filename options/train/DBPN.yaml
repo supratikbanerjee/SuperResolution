@@ -10,12 +10,12 @@ dataset:
   scale: 2
   train:
     name: DIV2K
-    data_location: data/datasets/DIV2K/train/
+    data_location: data/datasets/BSDS300/train/
     shuffle: true
     n_workers: 1  # per GPU
-    batch_size: 20
-    lr_size: 32
-    repeat: 2
+    batch_size: 25
+    lr_size: 16
+    repeat: 1
   test:
     name: Set5
     data_location: data/datasets/Set5/test/
@@ -27,14 +27,14 @@ dataset:
 #### network structures
 network_G:
   model: DDBPN
-  num_features: 64
+  num_features: 32
   in_channels: 3
   out_channels: 3
-  num_blocks: 7
+  num_blocks: 1
 
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 2500
+  epoch: 100
 
   lr_G: !!float 1e-4
   weight_decay_G: 0

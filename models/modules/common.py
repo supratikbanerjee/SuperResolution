@@ -52,7 +52,6 @@ class ResBlock(nn.Module):
     def forward(self, x):
         res = self.body(x).mul(self.res_scale)
         res += x
-
         return res
 
 class Upsampler(nn.Sequential):

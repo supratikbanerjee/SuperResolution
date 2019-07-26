@@ -34,11 +34,11 @@ class FSRCNN(nn.Module):
         super(FSRCNN, self).__init__()
 
         self.upscale_factor = upscale_factor
-        self.conv1 = nn.Conv2d(in_channels=3, out_channels=56, kernel_size=5, stride=1, padding=0)
-        self.conv2 = nn.Conv2d(in_channels=56, out_channels=12, kernel_size=1, stride=1, padding=1)
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=56, kernel_size=5, stride=1, padding=2)
+        self.conv2 = nn.Conv2d(in_channels=56, out_channels=12, kernel_size=1, stride=1, padding=0)
         self.conv3 = nn.Conv2d(in_channels=12, out_channels=56, kernel_size=3, stride=1, padding=1)
-        self.conv4 = nn.Conv2d(in_channels=56, out_channels=12, kernel_size=1, stride=1, padding=1)
-        self.deconv1 = nn.ConvTranspose2d(in_channels=12, out_channels=3, kernel_size=9, stride=upscale_factor, padding=1)
+        self.conv4 = nn.Conv2d(in_channels=56, out_channels=12, kernel_size=1, stride=1, padding=0)
+        self.deconv1 = nn.ConvTranspose2d(in_channels=12, out_channels=3, kernel_size=8, stride=upscale_factor, padding=3)
 
         self._initialize_weights()
 

@@ -13,7 +13,7 @@ class GAN():
 		self.logs = OrderedDict()
 		self.eval = {'psnr':0.0, 'ssim':0.0, 'ssim_epoch':0, 'psnr_epoch':0}
 		self.config = config
-		train_config = self.config['train']
+		self.train_config = self.config['train']
 		self.device = self.config['device']
 
 		# define model
@@ -21,25 +21,25 @@ class GAN():
 		self.netD = networks.define_D(self.config).to(self.device)
 		self.netF = networks.define_F(self.config).to(self.device)
 
-		self.pixel_criterion = networks.loss_criterion(train_config['pixel_criterion']).to(self.device)
-		self.adversarial_criterion = networks.loss_criterion(train_config['adversarial_criterion']).to(self.device)
-		self.feature_criterion = networks.loss_criterion(train_config['feature_criterion']).to(self.device)
+		self.pixel_criterion = networks.loss_criterion(self.train_config['pixel_criterion']).to(self.device)
+		self.adversarial_criterion = networks.loss_criterion(self.train_config['adversarial_criterion']).to(self.device)
+		self.feature_criterion = networks.loss_criterion(self.train_config['feature_criterion']).to(self.device)
 
-		self.pixel_weight = train_config['pixel_weight']
-		self.adversarial_weight = train_config['gan_weight']
-		self.feature_weight = train_config['feature_weight']
-		self.real_weightD = train_config['real_weightD']
-		self.fake_weightD = train_config['fake_weightD']
+		self.pixel_weight = self.train_config['pixel_weight']
+		self.adversarial_weight = self.train_config['gan_weight']
+		self.feature_weight = self.train_config['feature_weight']
+		self.real_weightD = self.train_config['real_weightD']
+		self.fake_weightD = self.train_config['fake_weightD']
 
-		self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=train_config['lr_G'],
-                                                weight_decay=train_config['weight_decay_G'],
-                                                betas=(train_config['beta1_G'], train_config['beta2_G']))
+		self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=self.train_config['lr_G'],
+                                                weight_decay=self.train_config['weight_decay_G'],
+                                                betas=(self.train_config['beta1_G'], self.train_config['beta2_G']))
 		#self.scheduler_G = torch.optim.lr_scheduler.StepLR(self.optimizer_G, step_size=train_config['lr_step'], 
 		#	gamma=train_config['lr_gamma'])
 
-		self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=train_config['lr_D'],
-                                                weight_decay=train_config['weight_decay_D'],
-                                                betas=(train_config['beta1_D'], train_config['beta2_D']))
+		self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=self.train_config['lr_D'],
+                                                weight_decay=self.train_config['weight_decay_D'],
+                                                betas=(self.train_config['beta1_D'], self.train_config['beta2_D']))
 		#self.scheduler_D = torch.optim.lr_scheduler.StepLR(self.optimizer_D, step_size=train_config['lr_step'], 
 		#	gamma=train_config['lr_gamma'])
 
@@ -62,12 +62,27 @@ class GAN():
 		self.netG.train()
 		self.netG.zero_grad()
 		real_features = Variable(self.netF(self.hr_real))
-		fake_features = self.netF(self.hr_fake)
-		pixel_loss_g = self.pixel_weight * self.pixel_criterion(self.hr_fake, self.hr_real) 
-		feature_loss_g = self.feature_weight * self.feature_criterion(fake_features, real_features)
-		content_loss = pixel_loss_g + feature_loss_g 
-		proba = self.netD(self.hr_fake)
-		adversarial_loss_g = self.adversarial_weight * self.adversarial_criterion(proba, self.get_target(proba, True))
+		
+		pixel_loss_g = 0.0
+		feature_loss_g = 0.0
+		adversarial_loss_g = 0.0
+		if self.train_config['cl_train']:
+			loss_steps = [self.pixel_criterion(sr, self.hr_real)  for sr in self.hr_fake]
+			fake_features = [Variable(self.netF(sr)) for sr in self.hr_fake]
+			loss_steps_f = [self.feature_criterion(sr, real_features)  for sr in fake_features]
+			probas = [Variable(self.netD(sr)) for sr in self.hr_fake]
+			loss_sets_a = [self.adversarial_criterion(proba, self.get_target(proba, True)) for proba in probas]
+			for step in range(len(loss_steps)):
+				pixel_loss_g += self.pixel_weight * loss_steps[step]
+				feature_loss_g += self.feature_weight * loss_steps_f[step]
+				adversarial_loss_g += self.adversarial_weight * loss_sets_a[step]
+		else:
+			pixel_loss_g = self.pixel_weight * self.pixel_criterion(self.hr_fake, self.hr_real) 
+			feature_loss_g = self.feature_weight * self.feature_criterion(fake_features, real_features)
+			proba = self.netD(self.hr_fake)
+			adversarial_loss_g = self.adversarial_weight * self.adversarial_criterion(proba, self.get_target(proba, True))
+
+		content_loss = pixel_loss_g + feature_loss_g
 		perceptual_loss = content_loss + adversarial_loss_g 
 		# total_loss_g = pixel_loss_g + adversarial_loss_g + feature_loss_g
 		self.logs['p_G'] = pixel_loss_g.item()
@@ -84,8 +99,17 @@ class GAN():
 		self.netD.zero_grad()
 		real_proba = self.netD(self.hr_real)
 		real_loss_d = self.adversarial_criterion(real_proba, self.get_target(real_proba, True))
-		fake_proba = self.netD(Variable(self.hr_fake))
-		fake_loss_d = self.adversarial_criterion(fake_proba, self.get_target(fake_proba, False))
+
+		fake_loss_d = 0.0
+		if self.train_config['cl_train']:
+			fake_probas = [Variable(self.netD(sr)) for sr in self.hr_fake]
+			loss_sets_d = [self.adversarial_criterion(fake_proba, self.get_target(fake_proba, True)) for fake_proba in fake_probas]
+			for step in range(len(loss_sets_d)):
+				fake_loss_d += loss_sets_d[step]
+		else:
+			fake_proba = self.netD(Variable(self.hr_fake))
+			fake_loss_d = self.adversarial_criterion(fake_proba, self.get_target(fake_proba, False))
+
 		#print(real_proba, fake_proba)
 		total_loss_d = ( self.real_weightD * real_loss_d + self.fake_weightD * fake_loss_d)
 		self.logs['r_D'] = real_loss_d.item()
@@ -100,6 +124,8 @@ class GAN():
 		self.hr_fake = self.netG(self.lr_input)
 		self.train_generator()
 		self.train_discriminator()
+		if isinstance(self.hr_fake, list):
+				self.hr_fake = self.hr_fake[-1]
 		
 
 	def test(self, batch):
@@ -107,6 +133,8 @@ class GAN():
 		self.lr_input, self.hr_real = Variable(batch[0].to(self.device)), Variable(batch[1].to(self.device))
 		with torch.no_grad():
 			self.hr_fake = self.netG(self.lr_input)
+			if isinstance(self.hr_fake, list):
+				self.hr_fake = self.hr_fake[-1]
 
 	def save(self, epoch):
 		model_path = self.config['logger']['path'] + self.config['name'] +'/checkpoint/'

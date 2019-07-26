@@ -60,6 +60,8 @@ class CNN():
 		pixel_loss_g.backward()
 		self.optimizer_G.step()
 		self.logs['p_G'] = pixel_loss_g.item()
+		if isinstance(self.hr_fake, list):
+				self.hr_fake = self.hr_fake[-1]
 
 	def test(self, batch):
 		self.netG.eval()

@@ -1,5 +1,6 @@
 #### general settings
-name: SRResNet_EXP_01
+name: SRCNN
+is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
@@ -26,16 +27,12 @@ dataset:
 
 #### network structures
 network_G:
-  model: RRDBNet
-  in_nc: 3
-  out_nc: 3
-  nf: 9
-  nb: 3
+  model: SRCNN
 
 #### training settings: learning rate scheme, loss
 train:
   epoch: 100
-
+  cl_train: false
   lr_G: !!float 1e-4
   weight_decay_G: 0
   beta1_G: 0.9

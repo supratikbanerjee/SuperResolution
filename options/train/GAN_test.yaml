@@ -1,6 +1,7 @@
 #### general settings
 name: GAN_TEST_01
-use_visdom: true
+is_train: true
+use_visdom: false
 visdom_port: 8067
 model: gan
 device: cuda
@@ -17,8 +18,8 @@ dataset:
     lr_size: 128
     repeat: 2
   test:
-    name: BSDS300
-    data_location: data/datasets/BSDS300/test/
+    name: Set5
+    data_location: data/datasets/Set5/test/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1
@@ -37,6 +38,7 @@ network_D:
 train:
   epoch: 100
 
+  cl_train: false
   lr_G: !!float 1e-4
   weight_decay_G: 0
   beta1_G: 0.9

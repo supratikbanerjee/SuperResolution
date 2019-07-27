@@ -17,7 +17,7 @@ class GAN():
 
 		self.netG = networks.define_G(self.config).to(self.device)
 
-		if self.configp['is_train']:
+		if self.config['is_train']:
 			self.train_config = self.config['train']
 			
 			# define model
@@ -66,22 +66,23 @@ class GAN():
 		#self.scheduler_G.step()
 		self.netG.train()
 		self.netG.zero_grad()
-		real_features = Variable(self.netF(self.hr_real))
+		real_features = self.netF(Variable(self.hr_real))
 		
 		pixel_loss_g = 0.0
 		feature_loss_g = 0.0
 		adversarial_loss_g = 0.0
 		if self.train_config['cl_train']:
 			loss_steps = [self.pixel_criterion(sr, self.hr_real)  for sr in self.hr_fake]
-			fake_features = [Variable(self.netF(sr)) for sr in self.hr_fake]
+			fake_features = [self.netF(Variable(sr)) for sr in self.hr_fake]
 			loss_steps_f = [self.feature_criterion(sr, real_features)  for sr in fake_features]
-			probas = [Variable(self.netD(sr)) for sr in self.hr_fake]
+			probas = [self.netD(Variable(sr)) for sr in self.hr_fake]
 			loss_sets_a = [self.adversarial_criterion(proba, self.get_target(proba, True)) for proba in probas]
 			for step in range(len(loss_steps)):
 				pixel_loss_g += self.pixel_weight * loss_steps[step]
 				feature_loss_g += self.feature_weight * loss_steps_f[step]
 				adversarial_loss_g += self.adversarial_weight * loss_sets_a[step]
 		else:
+			fake_features = self.netF(self.hr_fake)
 			pixel_loss_g = self.pixel_weight * self.pixel_criterion(self.hr_fake, self.hr_real) 
 			feature_loss_g = self.feature_weight * self.feature_criterion(fake_features, real_features)
 			proba = self.netD(self.hr_fake)
@@ -107,8 +108,8 @@ class GAN():
 
 		fake_loss_d = 0.0
 		if self.train_config['cl_train']:
-			fake_probas = [Variable(self.netD(sr)) for sr in self.hr_fake]
-			loss_sets_d = [self.adversarial_criterion(fake_proba, self.get_target(fake_proba, True)) for fake_proba in fake_probas]
+			fake_probas = [self.netD(Variable(sr)) for sr in self.hr_fake]
+			loss_sets_d = [self.adversarial_criterion(fake_proba, self.get_target(fake_proba, False)) for fake_proba in fake_probas]
 			for step in range(len(loss_sets_d)):
 				fake_loss_d += loss_sets_d[step]
 		else:

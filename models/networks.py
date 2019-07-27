@@ -1,6 +1,6 @@
 import torchvision
 import torch.nn as nn
-from models.modules.capsule_network import CapsuleNetwork
+from models.modules.capsule.capsule_network import CapsuleNetwork
 import models.modules.cnn_models as CNN_arch
 import models.modules.discriminator_vgg_arch as SRGAN_arch
 import models.modules.RRDBNet_arch as RRDBNet_arch
@@ -52,7 +52,7 @@ def define_G(config):
 	elif model == 'DBPN':
 		netG = DBPN.Net(num_channels=net_config['in_channels'], base_filter=net_config['out_channels'],  feat = net_config['num_features'], 
 			num_stages=net_config['num_blocks'], scale_factor=config['dataset']['scale']) 
-		
+
 	elif model == 'DBPNS':
 		netG = DBPN.Net(num_channels=net_config['in_channels'], base_filter=net_config['out_channels'],  feat = net_config['num_features'], 
 			num_stages=net_config['num_blocks'], scale_factor=config['dataset']['scale']) 

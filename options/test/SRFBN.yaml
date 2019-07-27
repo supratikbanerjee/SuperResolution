@@ -1,0 +1,34 @@
+name: SRFBN_x4
+suffix: ~  # add suffix to saved images
+scale: 4
+model: cnn
+device: cuda
+
+datasets:
+  test_1:
+    name: Set5
+    data_location: data/datasets/Set5/test/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    repeat: 1
+  test_2:  # the 2st test dataset
+    name: Set14
+    data_location: data/datasets/Set14/test/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    repeat: 1
+
+#### network structures
+network_G:
+  model: SRFBN
+  num_features: 64
+  in_channels: 3
+  out_channels: 3
+  num_steps: 4
+  num_groups: 6
+
+#### path
+path:
+  pretrain_model_G: trained_models/100_SRFBN_x4_netG.pth

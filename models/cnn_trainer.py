@@ -29,8 +29,10 @@ class CNN():
 			self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=self.train_config['lr_G'],
 	                                                weight_decay=self.train_config['weight_decay_G'],
 	                                                betas=(self.train_config['beta1_G'], self.train_config['beta2_G']))
-			#self.scheduler_G = torch.optim.lr_scheduler.StepLR(self.optimizer_G, step_size=train_config['lr_step'], 
-			#	gamma=self.train_config['lr_gamma'])
+			if self.train_config['lr_scheme'] == 'MultiStepLR':
+				self.scheduler_G = torch.optim.lr_scheduler.MultiStepLR(self.optimizer_G, 
+					self.train_config['lr_step'], 
+					self.train_config['lr_gamma'])
 		else:
 			self.load()
 

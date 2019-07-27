@@ -8,7 +8,7 @@ device: cuda
 
 #### datasets
 dataset:
-  scale: 2
+  scale: 4
   train:
     name: DIV2K
     data_location: data/datasets/BSDS300/train/
@@ -28,12 +28,11 @@ dataset:
 #### network structures
 network_G:
   model: RDCAN
-  num_features: 32
+  num_features: 64
   in_channels: 3
   out_channels: 3
-  num_blocks: 2
-  num_layers: 1
-  reduction: 16
+  num_steps: 4
+  num_groups: 6
 
 #### training settings: learning rate scheme, loss
 train:

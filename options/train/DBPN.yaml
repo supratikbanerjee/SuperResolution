@@ -14,8 +14,8 @@ dataset:
     data_location: data/datasets/BSDS300/train/
     shuffle: true
     n_workers: 1  # per GPU
-    batch_size: 25
-    lr_size: 16
+    batch_size: 20
+    lr_size: 32
     repeat: 1
   test:
     name: Set5
@@ -28,9 +28,9 @@ dataset:
 #### network structures
 network_G:
   model: DDBPN
-  num_features: 32
+  num_features: 64 #256 DBPN
   in_channels: 3
-  out_channels: 3
+  out_channels: 3 #64 DBPN
   num_blocks: 7
 
 #### training settings: learning rate scheme, loss
@@ -43,7 +43,8 @@ train:
   beta1_G: 0.9
   beta2_G: 0.99
 
-  lr_step: 10
+  lr_scheme: MultiStepLR
+  lr_step: [200, 400, 600, 800]
   lr_gamma: 0.5
 
   pixel_criterion: l1

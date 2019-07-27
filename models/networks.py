@@ -10,6 +10,8 @@ import models.modules.dbpn_arch as DDBPN_arch
 import models.modules.rdn_arch as RDN_arch
 import models.modules.RDCAN as RDCAN_arch
 import models.modules.srfbn_arch as SRFBN_arch
+import models.modules.DBPN.dbpn as DBPN
+
 # Generator
 def define_G(config):
 	net_config = config['network_G']
@@ -41,12 +43,19 @@ def define_G(config):
 			upscale_factor=config['dataset']['scale'])
 	elif model == 'RDCAN':
 		netG = RDCAN_arch.RDCAN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
-			num_features=net_config['num_features'], num_blocks = net_config['num_blocks'], num_layers = net_config['num_layers'],
-			upscale_factor=config['dataset']['scale'], reduction=net_config['reduction'])
+                                  num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
+                                  upscale_factor=config['dataset']['scale'])
 	elif model == 'SRFBN':
 		netG = SRFBN_arch.SRFBN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
                                   num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
                                   upscale_factor=config['dataset']['scale'])
+	elif model == 'DBPN':
+		netG = DBPN.Net(num_channels=net_config['in_channels'], base_filter=net_config['out_channels'],  feat = net_config['num_features'], 
+			num_stages=net_config['num_blocks'], scale_factor=config['dataset']['scale']) 
+		
+	elif model == 'DBPNS':
+		netG = DBPN.Net(num_channels=net_config['in_channels'], base_filter=net_config['out_channels'],  feat = net_config['num_features'], 
+			num_stages=net_config['num_blocks'], scale_factor=config['dataset']['scale']) 
 
 	else:
 		raise NotImplementedError('Generator model [{:s}] not recognized'.format(model))

@@ -1,115 +1,172 @@
-# Residual Dense Network for Image Super-Resolution
-# https://arxiv.org/abs/1802.08797
-
 import torch
 import torch.nn as nn
+from .blocks import ConvBlock, DeconvBlock, MeanShift
 
-class CALayer(nn.Module):
-    def __init__(self, channel, reduction=16):
-        super(CALayer, self).__init__()
-        # global average pooling: feature --> point
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        # feature channel downscale and upscale --> channel weight
-        self.conv_du = nn.Sequential(
-                nn.Conv2d(channel, channel // reduction, 1, padding=0, bias=True),
-                nn.ReLU(inplace=True),
-                nn.Conv2d(channel // reduction, channel, 1, padding=0, bias=True),
-                nn.Sigmoid()
-        )
+class FeedbackBlock(nn.Module):
+    def __init__(self, num_features, num_groups, upscale_factor, act_type, norm_type):
+        super(FeedbackBlock, self).__init__()
+        if upscale_factor == 2:
+            stride = 2
+            padding = 2
+            kernel_size = 6
+        elif upscale_factor == 3:
+            stride = 3
+            padding = 2
+            kernel_size = 7
+        elif upscale_factor == 4:
+            stride = 4
+            padding = 2
+            kernel_size = 8
+        elif upscale_factor == 8:
+            stride = 8
+            padding = 2
+            kernel_size = 12
+
+        self.num_groups = num_groups
+
+        self.compress_in = ConvBlock(2*num_features, num_features,
+                                     kernel_size=1,
+                                     act_type=act_type, norm_type=norm_type)
+
+        self.upBlocks = nn.ModuleList()
+        self.downBlocks = nn.ModuleList()
+        self.uptranBlocks = nn.ModuleList()
+        self.downtranBlocks = nn.ModuleList()
+
+        for idx in range(self.num_groups):
+            self.upBlocks.append(DeconvBlock(num_features, num_features,
+                                             kernel_size=kernel_size, stride=stride, padding=padding,
+                                             act_type=act_type, norm_type=norm_type))
+            self.downBlocks.append(ConvBlock(num_features, num_features,
+                                             kernel_size=kernel_size, stride=stride, padding=padding,
+                                             act_type=act_type, norm_type=norm_type, valid_padding=False))
+            if idx > 0:
+                self.uptranBlocks.append(ConvBlock(num_features*(idx+1), num_features,
+                                                   kernel_size=1, stride=1,
+                                                   act_type=act_type, norm_type=norm_type))
+                self.downtranBlocks.append(ConvBlock(num_features*(idx+1), num_features,
+                                                     kernel_size=1, stride=1,
+                                                     act_type=act_type, norm_type=norm_type))
+
+        self.compress_out = ConvBlock(num_groups*num_features, num_features,
+                                      kernel_size=1,
+                                      act_type=act_type, norm_type=norm_type)
+
+        self.should_reset = True
+        self.last_hidden = None
 
     def forward(self, x):
-        y = self.avg_pool(x)
-        y = self.conv_du(y)
-        return x * y
+        if self.should_reset:
+            self.last_hidden = torch.zeros(x.size()).cuda()
+            self.last_hidden.copy_(x)
+            self.should_reset = False
 
-class RDB_Conv(nn.Module):
-    def __init__(self, inChannels, growRate, kSize=3):
-        super(RDB_Conv, self).__init__()
-        Cin = inChannels
-        G  = growRate
-        self.conv = nn.Sequential(*[
-            nn.Conv2d(Cin, G, kSize, padding=(kSize-1)//2, stride=1),
-            nn.ReLU()
-        ])
+        x = torch.cat((x, self.last_hidden), dim=1)
+        x = self.compress_in(x)
 
-    def forward(self, x):
-        out = self.conv(x)
-        return torch.cat((x, out), 1)
+        lr_features = []
+        hr_features = []
+        lr_features.append(x)
 
-class RDB(nn.Module):
-    def __init__(self, growRate0, growRate, nConvLayers, reduction, kSize=3):
-        super(RDB, self).__init__()
-        G0 = growRate0
-        G  = growRate
-        C  = nConvLayers
-        
-        convs = []
-        for c in range(C):
-            convs.append(RDB_Conv(G0 + c*G, G))
-        convs.append(CALayer(G0 + C*G, reduction))
-        self.convs = nn.Sequential(*convs)
-        
-        # Local Feature Fusion
-        self.LFF = nn.Conv2d(G0 + C*G, G0, 1, padding=0, stride=1)
+        for idx in range(self.num_groups):
+            LD_L = torch.cat(tuple(lr_features), 1)    # when idx == 0, lr_features == [x]
+            if idx > 0:
+                LD_L = self.uptranBlocks[idx-1](LD_L)
+            LD_H = self.upBlocks[idx](LD_L)
 
-    def forward(self, x):
-        return self.LFF(self.convs(x)) + x
+            hr_features.append(LD_H)
+
+            LD_H = torch.cat(tuple(hr_features), 1)
+            if idx > 0:
+                LD_H = self.downtranBlocks[idx-1](LD_H)
+            LD_L = self.downBlocks[idx](LD_H)
+
+            lr_features.append(LD_L)
+
+        del hr_features
+        output = torch.cat(tuple(lr_features[1:]), 1)   # leave out input x, i.e. lr_features[0]
+        output = self.compress_out(output)
+
+        self.last_hidden = output
+
+        return output
+
+    def reset_state(self):
+        self.should_reset = True
 
 class RDCAN(nn.Module):
-    def __init__(self, in_channels, out_channels, num_features, num_blocks, num_layers, upscale_factor, reduction):
+    def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, act_type = 'prelu', norm_type = None):
         super(RDCAN, self).__init__()
-        r = upscale_factor
-        G0 = num_features
-        kSize = 3
 
-        # number of RDB blocks, conv layers, out channels
-        self.D, C, G = [num_blocks, num_layers, num_features]
+        if upscale_factor == 2:
+            stride = 2
+            padding = 2
+            kernel_size = 6
+        elif upscale_factor == 3:
+            stride = 3
+            padding = 2
+            kernel_size = 7
+        elif upscale_factor == 4:
+            stride = 4
+            padding = 2
+            kernel_size = 8
+        elif upscale_factor == 8:
+            stride = 8
+            padding = 2
+            kernel_size = 12
 
-        # Shallow feature extraction net
-        self.SFENet1 = nn.Conv2d(in_channels, G0, kSize, padding=(kSize-1)//2, stride=1)
-        self.SFENet2 = nn.Conv2d(G0, G0, kSize, padding=(kSize-1)//2, stride=1)
+        self.num_steps = num_steps
+        self.num_features = num_features
+        self.upscale_factor = upscale_factor
 
-        # Redidual dense blocks and dense feature fusion
-        self.RDBs = nn.ModuleList()
-        for i in range(self.D):
-            self.RDBs.append(
-                RDB(growRate0 = G0, growRate = G, nConvLayers = C, reduction=reduction)
-            )
+        # RGB mean for DIV2K
+        # rgb_mean = (0.4488, 0.4371, 0.4040)
+        # rgb_std = (1.0, 1.0, 1.0)
+        # self.sub_mean = MeanShift(rgb_mean, rgb_std)
 
-        # Global Feature Fusion
-        self.GFF = nn.Sequential(*[
-            nn.Conv2d(self.D * G0, G0, 1, padding=0, stride=1),
-            nn.Conv2d(G0, G0, kSize, padding=(kSize-1)//2, stride=1)
-        ])
+        # LR feature extraction block
+        self.conv_in = ConvBlock(in_channels, 4*num_features,
+                                 kernel_size=3,
+                                 act_type=act_type, norm_type=norm_type)
+        self.feat_in = ConvBlock(4*num_features, num_features,
+                                 kernel_size=1,
+                                 act_type=act_type, norm_type=norm_type)
 
-        # Up-sampling net
-        if r == 2 or r == 3:
-            self.UPNet = nn.Sequential(*[
-                nn.Conv2d(G0, G * r * r, kSize, padding=(kSize-1)//2, stride=1),
-                nn.PixelShuffle(r),
-                nn.Conv2d(G, out_channels, kSize, padding=(kSize-1)//2, stride=1)
-            ])
-        elif r == 4:
-            self.UPNet = nn.Sequential(*[
-                nn.Conv2d(G0, G * 4, kSize, padding=(kSize-1)//2, stride=1),
-                nn.PixelShuffle(2),
-                nn.Conv2d(G, G * 4, kSize, padding=(kSize-1)//2, stride=1),
-                nn.PixelShuffle(2),
-                nn.Conv2d(G, out_channels, kSize, padding=(kSize-1)//2, stride=1)
-            ])
-        else:
-            raise ValueError("scale must be 2 or 3 or 4.")
+        # basic block
+        self.block = FeedbackBlock(num_features, num_groups, upscale_factor, act_type, norm_type)
+
+        # reconstruction block
+        # uncomment for pytorch 0.4.0
+        # self.upsample = nn.Upsample(scale_factor=upscale_factor, mode='bilinear')
+
+        self.out = DeconvBlock(num_features, num_features,
+                               kernel_size=kernel_size, stride=stride, padding=padding,
+                               act_type='prelu', norm_type=norm_type)
+        self.conv_out = ConvBlock(num_features, out_channels,
+                                  kernel_size=3,
+                                  act_type=None, norm_type=norm_type)
+
+        
+        #self.add_mean = MeanShift(rgb_mean, rgb_std, 1)
 
     def forward(self, x):
-        f__1 = self.SFENet1(x)
-        x  = self.SFENet2(f__1)
+        self._reset_state()
 
-        RDBs_out = []
-        for i in range(self.D):
-            x = self.RDBs[i](x)
-            RDBs_out.append(x)
+        #x = self.sub_mean(x)
+        # uncomment for pytorch 0.4.0
+        # inter_res = self.upsample(x)
+        
+        # comment for pytorch 0.4.0
+        inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
 
-        x = self.GFF(torch.cat(RDBs_out,1))
-        x += f__1
+        x = self.conv_in(x)
+        x = self.feat_in(x)
+        
+        h = self.block(x)
 
-        return self.UPNet(x)
+        h = torch.add(inter_res, self.conv_out(self.out(h)))
+
+        return h
+
+    def _reset_state(self):
+        self.block.reset_state()

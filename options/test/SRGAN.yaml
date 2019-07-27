@@ -1,0 +1,42 @@
+name: MSRGAN_x2_20Epoch
+is_train: false
+model: cnn
+device: cuda
+
+dataset:
+  scale: 2
+  test_1:
+    name: Set5
+    data_location: data/datasets/Set5/test/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    repeat: 1
+  test_2:  # the 2st test dataset
+    name: Set14
+    data_location: data/datasets/Set14/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    repeat: 1
+  test_3:  # the 2st test dataset
+    name: BSDS100
+    data_location: data/datasets/BSDS300/test/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    repeat: 1
+
+#### network structures
+network_G:
+  model: MSRResNet
+  in_nc: 3
+  out_nc: 3
+  nf: 64
+  nb: 16
+  upscale: 2
+
+#### path
+path:
+  experiments: trained_models/experiments/
+  pretrain_model_G: trained_models/20_MSRResNet_x2_netG.pth

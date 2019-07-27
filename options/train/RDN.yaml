@@ -1,5 +1,6 @@
 #### general settings
 name: RDN_TEST_EXP_01
+is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
@@ -9,7 +10,7 @@ device: cuda
 dataset:
   scale: 2
   train:
-    name: DIV2K
+    name: BSDS300
     data_location: data/datasets/BSDS300/train/
     shuffle: true
     n_workers: 0  # per GPU
@@ -30,13 +31,14 @@ network_G:
   num_features: 32
   in_channels: 3
   out_channels: 3
-  num_blocks: 2
-  num_layers: 1
+  num_blocks: 16
+  num_layers: 8
 
 #### training settings: learning rate scheme, loss
 train:
   epoch: 100
 
+  cl_train: false
   lr_G: !!float 1e-4
   weight_decay_G: 0
   beta1_G: 0.9

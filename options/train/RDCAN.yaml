@@ -1,5 +1,6 @@
 #### general settings
 name: RDACN_TEST_EXP_04
+is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
@@ -38,6 +39,7 @@ network_G:
 train:
   epoch: 100
 
+  cl_train: false
   lr_G: !!float 1e-4
   weight_decay_G: 0
   beta1_G: 0.9

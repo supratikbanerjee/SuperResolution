@@ -1,5 +1,6 @@
 #### general settings
 name: SRFBGAN_TEST_01
+is_train: true
 use_visdom: true
 visdom_port: 8067
 model: gan

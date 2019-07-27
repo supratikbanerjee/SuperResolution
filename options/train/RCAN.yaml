@@ -28,9 +28,9 @@ dataset:
 #### network structures
 network_G:
   model: RCAN
-  n_resgroups: 2
-  n_resblocks: 1
-  num_features: 32
+  n_resgroups: 10
+  n_resblocks: 20
+  num_features: 64
   in_channels: 3
   out_channels: 3
   res_scale: 1

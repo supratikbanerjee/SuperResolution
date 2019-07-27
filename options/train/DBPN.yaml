@@ -31,7 +31,7 @@ network_G:
   num_features: 32
   in_channels: 3
   out_channels: 3
-  num_blocks: 1
+  num_blocks: 7
 
 #### training settings: learning rate scheme, loss
 train:

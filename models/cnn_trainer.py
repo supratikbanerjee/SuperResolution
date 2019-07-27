@@ -4,7 +4,7 @@ from torch.autograd import Variable
 import models.networks as networks
 from collections import OrderedDict
 from collections import defaultdict
-
+import time
 
 class CNN():
 	def __init__(self, config):
@@ -13,22 +13,26 @@ class CNN():
 		self.logs = OrderedDict()
 		self.eval = {'psnr':0.0, 'ssim':0.0, 'ssim_epoch':0, 'psnr_epoch':0}
 		self.config = config
-		self.train_config = self.config['train']
 		self.device = self.config['device']
 
 		# define model
 		self.netG = networks.define_G(self.config).to(self.device)
 
-		self.pixel_criterion = networks.loss_criterion(self.train_config['pixel_criterion']).to(self.device)
+		if self.config['is_train']:
+			self.train_config = self.config['train']
 
-		self.pixel_weight = self.train_config['pixel_weight']
+			self.pixel_criterion = networks.loss_criterion(self.train_config['pixel_criterion']).to(self.device)
+
+			self.pixel_weight = self.train_config['pixel_weight']
 
 
-		self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=self.train_config['lr_G'],
-                                                weight_decay=self.train_config['weight_decay_G'],
-                                                betas=(self.train_config['beta1_G'], self.train_config['beta2_G']))
-		#self.scheduler_G = torch.optim.lr_scheduler.StepLR(self.optimizer_G, step_size=train_config['lr_step'], 
-		#	gamma=self.train_config['lr_gamma'])
+			self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=self.train_config['lr_G'],
+	                                                weight_decay=self.train_config['weight_decay_G'],
+	                                                betas=(self.train_config['beta1_G'], self.train_config['beta2_G']))
+			#self.scheduler_G = torch.optim.lr_scheduler.StepLR(self.optimizer_G, step_size=train_config['lr_step'], 
+			#	gamma=self.train_config['lr_gamma'])
+		else:
+			self.load()
 
 	def update_eval(self, psnr, ssim, epoch):
 		if ssim > self.eval['ssim']:
@@ -67,9 +71,12 @@ class CNN():
 		self.netG.eval()
 		self.lr_input, self.hr_real = Variable(batch[0].to(self.device)), Variable(batch[1].to(self.device))
 		with torch.no_grad():
+			infer_time_start = time.time()
 			self.hr_fake = self.netG(self.lr_input)
+			infer_time = time.time() - infer_time_start
 			if isinstance(self.hr_fake, list):
 				self.hr_fake = self.hr_fake[-1]
+		return infer_time
 
 	def save(self, epoch):
 		model_path = self.config['logger']['path'] + self.config['name'] +'/checkpoint/'
@@ -99,3 +106,7 @@ class CNN():
 
 	def get_logs(self):
 		return self.logs
+
+	def load(self):
+		checkpoint = torch.load(self.config['path']['pretrain_model_G'])
+		self.netG.load_state_dict(checkpoint['state_dict'])

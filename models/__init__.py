@@ -1,6 +1,6 @@
 def create_model(config, logger):
     model = config['model']
-
+    
     if model == 'cnn':
         from .cnn_trainer import CNN as M
     elif model == 'gan':

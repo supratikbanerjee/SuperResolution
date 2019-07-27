@@ -1,5 +1,6 @@
 #### general settings
 name: RDACN_TEST_EXP_04
+is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn

@@ -4,7 +4,7 @@ from torch.autograd import Variable
 import models.networks as networks
 from collections import OrderedDict
 from collections import defaultdict
-
+import time
 
 class GAN():
 	def __init__(self, config):
@@ -13,35 +13,40 @@ class GAN():
 		self.logs = OrderedDict()
 		self.eval = {'psnr':0.0, 'ssim':0.0, 'ssim_epoch':0, 'psnr_epoch':0}
 		self.config = config
-		self.train_config = self.config['train']
 		self.device = self.config['device']
 
-		# define model
 		self.netG = networks.define_G(self.config).to(self.device)
-		self.netD = networks.define_D(self.config).to(self.device)
-		self.netF = networks.define_F(self.config).to(self.device)
 
-		self.pixel_criterion = networks.loss_criterion(self.train_config['pixel_criterion']).to(self.device)
-		self.adversarial_criterion = networks.loss_criterion(self.train_config['adversarial_criterion']).to(self.device)
-		self.feature_criterion = networks.loss_criterion(self.train_config['feature_criterion']).to(self.device)
+		if self.configp['is_train']:
+			self.train_config = self.config['train']
+			
+			# define model
+			self.netD = networks.define_D(self.config).to(self.device)
+			self.netF = networks.define_F(self.config).to(self.device)
 
-		self.pixel_weight = self.train_config['pixel_weight']
-		self.adversarial_weight = self.train_config['gan_weight']
-		self.feature_weight = self.train_config['feature_weight']
-		self.real_weightD = self.train_config['real_weightD']
-		self.fake_weightD = self.train_config['fake_weightD']
+			self.pixel_criterion = networks.loss_criterion(self.train_config['pixel_criterion']).to(self.device)
+			self.adversarial_criterion = networks.loss_criterion(self.train_config['adversarial_criterion']).to(self.device)
+			self.feature_criterion = networks.loss_criterion(self.train_config['feature_criterion']).to(self.device)
 
-		self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=self.train_config['lr_G'],
-                                                weight_decay=self.train_config['weight_decay_G'],
-                                                betas=(self.train_config['beta1_G'], self.train_config['beta2_G']))
-		#self.scheduler_G = torch.optim.lr_scheduler.StepLR(self.optimizer_G, step_size=train_config['lr_step'], 
-		#	gamma=train_config['lr_gamma'])
+			self.pixel_weight = self.train_config['pixel_weight']
+			self.adversarial_weight = self.train_config['gan_weight']
+			self.feature_weight = self.train_config['feature_weight']
+			self.real_weightD = self.train_config['real_weightD']
+			self.fake_weightD = self.train_config['fake_weightD']
 
-		self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=self.train_config['lr_D'],
-                                                weight_decay=self.train_config['weight_decay_D'],
-                                                betas=(self.train_config['beta1_D'], self.train_config['beta2_D']))
-		#self.scheduler_D = torch.optim.lr_scheduler.StepLR(self.optimizer_D, step_size=train_config['lr_step'], 
-		#	gamma=train_config['lr_gamma'])
+			self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=self.train_config['lr_G'],
+	                                                weight_decay=self.train_config['weight_decay_G'],
+	                                                betas=(self.train_config['beta1_G'], self.train_config['beta2_G']))
+			#self.scheduler_G = torch.optim.lr_scheduler.StepLR(self.optimizer_G, step_size=train_config['lr_step'], 
+			#	gamma=train_config['lr_gamma'])
+
+			self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=self.train_config['lr_D'],
+	                                                weight_decay=self.train_config['weight_decay_D'],
+	                                                betas=(self.train_config['beta1_D'], self.train_config['beta2_D']))
+			#self.scheduler_D = torch.optim.lr_scheduler.StepLR(self.optimizer_D, step_size=train_config['lr_step'], 
+			#	gamma=train_config['lr_gamma'])
+		else:
+			self.load()
 
 	def update_eval(self, psnr, ssim, epoch):
 		if ssim > self.eval['ssim']:
@@ -132,9 +137,12 @@ class GAN():
 		self.netG.eval()
 		self.lr_input, self.hr_real = Variable(batch[0].to(self.device)), Variable(batch[1].to(self.device))
 		with torch.no_grad():
+			infer_time_start = time.time()
 			self.hr_fake = self.netG(self.lr_input)
+			infer_time = time.time() - infer_time_start
 			if isinstance(self.hr_fake, list):
 				self.hr_fake = self.hr_fake[-1]
+		return infer_time
 
 	def save(self, epoch):
 		model_path = self.config['logger']['path'] + self.config['name'] +'/checkpoint/'
@@ -179,3 +187,7 @@ class GAN():
 
 	def get_logs(self):
 		return self.logs
+
+	def load(self):
+		checkpoint = torch.load(self.config['path']['pretrain_model_G'])
+		self.netG.load_state_dict(checkpoint['state_dict'])

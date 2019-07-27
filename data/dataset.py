@@ -84,3 +84,15 @@ def get_test_set(config):
 
 	test_set = Dataset(config, 'test')
 	return data.DataLoader(dataset=test_set, batch_size=config['test']['batch_size'], shuffle=config['test']['shuffle'], pin_memory=True)
+
+def get_test_sets(config, logger):
+	test_dataloaders = {}
+	for test_set in config:
+		if test_set != 'scale':
+			# print(test_set)
+			test_data = Dataset(config, test_set)
+			test_dataloader = data.DataLoader(dataset=test_data, batch_size=config[test_set]['batch_size'], shuffle=config[test_set]['shuffle'], pin_memory=True)
+			test_size = len(test_dataloader)
+			logger.log('Test Images: {:,d} in {:s}'.format(test_size, config[test_set]['name']))
+			test_dataloaders[test_set] = test_dataloader
+	return test_dataloaders

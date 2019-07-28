@@ -44,7 +44,7 @@ def define_G(config):
 	elif model == 'RDCAN':
 		netG = RDCAN_arch.RDCAN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
                                   num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
-                                  upscale_factor=config['dataset']['scale'], train=net_config['train'])
+                                  upscale_factor=config['dataset']['scale'], reduction=net_config['reduction'])
 	elif model == 'SRFBN':
 		netG = SRFBN_arch.SRFBN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
                                   num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],

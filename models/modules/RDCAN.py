@@ -22,7 +22,7 @@ class CALayer(nn.Module):
         return x * y
 
 class FeedbackBlock(nn.Module):
-    def __init__(self, num_features, num_groups, upscale_factor, act_type, norm_type):
+    def __init__(self, num_features, num_groups, upscale_factor, act_type, norm_type, reduction):
         super(FeedbackBlock, self).__init__()
         if upscale_factor == 2:
             stride = 2
@@ -31,11 +31,11 @@ class FeedbackBlock(nn.Module):
         elif upscale_factor == 3:
             stride = 3
             padding = 2
-            kernel_size = 3
+            kernel_size = 7
         elif upscale_factor == 4:
             stride = 4
             padding = 2
-            kernel_size = 3
+            kernel_size = 8
         elif upscale_factor == 8:
             stride = 8
             padding = 2
@@ -71,7 +71,7 @@ class FeedbackBlock(nn.Module):
                                       kernel_size=1,
                                       act_type=act_type, norm_type=norm_type)
 
-        self.CALayer = CALayer(num_features)
+        self.CALayer = CALayer(num_features, reduction)
 
         self.should_reset = True
         self.last_hidden = None
@@ -118,7 +118,7 @@ class FeedbackBlock(nn.Module):
         self.should_reset = True
 
 class RDCAN(nn.Module):
-    def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, act_type = 'prelu', norm_type = None, train=True):
+    def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, act_type = 'prelu', norm_type = None, reduction=8):
         super(RDCAN, self).__init__()
 
         if upscale_factor == 2:
@@ -157,7 +157,7 @@ class RDCAN(nn.Module):
                                  act_type=act_type, norm_type=norm_type)
 
         # basic block
-        self.block = FeedbackBlock(num_features, num_groups, upscale_factor, act_type, norm_type)
+        self.block = FeedbackBlock(num_features, num_groups, upscale_factor, act_type, norm_type, reduction)
 
         # reconstruction block
         # uncomment for pytorch 0.4.0

@@ -1,10 +1,10 @@
-name: SRCNN_x4_100Epoch
+name: SRCNN_x2_100Epoch
 is_train: false
 model: cnn
 device: cuda
 
 dataset:
-  scale: 4
+  scale: 2
   test_1:
     name: Set5
     data_location: data/datasets/Set5/test/
@@ -41,4 +41,4 @@ network_G:
 #### path
 path:
   experiments: trained_models/experiments/
-  pretrain_model_G: trained_models/100_SRCNN_x4_netG.pth
+  pretrain_model_G: trained_models/100_SRCNN_x2_netG.pth

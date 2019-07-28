@@ -1,4 +1,4 @@
-name: RDCAN_x2_100Epoch_RNN
+name: RDCAN_x2_100Epoch_Tiny
 is_train: false
 model: cnn
 device: cuda
@@ -37,15 +37,15 @@ dataset:
 #### network structures
 network_G:
   model: RDCAN
-  num_features: 32
+  num_features: 16
   in_channels: 3
   out_channels: 3
   num_steps: 4 # later use
-  num_groups: 3
+  num_groups: 1
   train: false
 
 
 #### path
 path:
   experiments: trained_models/experiments/
-  pretrain_model_G: trained_models/100_RDCAN_x2_netG_CA.pth
+  pretrain_model_G: trained_models/100_RDCAN_x2_netG_T.pth

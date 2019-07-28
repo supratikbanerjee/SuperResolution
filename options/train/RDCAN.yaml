@@ -1,5 +1,5 @@
 #### general settings
-name: RDACN_EXP_03_CA
+name: RDACN_EXP_03_Res
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -11,7 +11,7 @@ dataset:
   scale: 2
   train:
     name: DIV2K
-    data_location: data/datasets/DIV2K/train/
+    data_location: data/datasets/BSDS300/train/
     shuffle: true
     n_workers: 0  # per GPU
     batch_size: 20
@@ -28,11 +28,11 @@ dataset:
 #### network structures
 network_G:
   model: RDCAN
-  num_features: 32
+  num_features: 16
   in_channels: 3
   out_channels: 3
   num_steps: 4 # later use
-  num_groups: 3
+  num_groups: 1
   train: true
 
 #### training settings: learning rate scheme, loss

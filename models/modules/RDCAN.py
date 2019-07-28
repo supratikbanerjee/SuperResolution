@@ -2,21 +2,40 @@ import torch
 import torch.nn as nn
 from .blocks import ConvBlock, DeconvBlock, MeanShift
 
+
+class CALayer(nn.Module):
+    def __init__(self, channel, reduction=8):
+        super(CALayer, self).__init__()
+        # global average pooling: feature --> point
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        # feature channel downscale and upscale --> channel weight
+        self.conv_du = nn.Sequential(
+                nn.Conv2d(channel, channel // reduction, 1, padding=0, bias=True),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(channel // reduction, channel, 1, padding=0, bias=True),
+                nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        y = self.avg_pool(x)
+        y = self.conv_du(y)
+        return x * y
+
 class FeedbackBlock(nn.Module):
     def __init__(self, num_features, num_groups, upscale_factor, act_type, norm_type):
         super(FeedbackBlock, self).__init__()
         if upscale_factor == 2:
             stride = 2
             padding = 2
-            kernel_size = 6
+            kernel_size = 3
         elif upscale_factor == 3:
             stride = 3
             padding = 2
-            kernel_size = 7
+            kernel_size = 3
         elif upscale_factor == 4:
             stride = 4
             padding = 2
-            kernel_size = 8
+            kernel_size = 3
         elif upscale_factor == 8:
             stride = 8
             padding = 2
@@ -51,6 +70,8 @@ class FeedbackBlock(nn.Module):
         self.compress_out = ConvBlock(num_groups*num_features, num_features,
                                       kernel_size=1,
                                       act_type=act_type, norm_type=norm_type)
+
+        self.CALayer = CALayer(num_features)
 
         self.should_reset = True
         self.last_hidden = None
@@ -89,13 +110,15 @@ class FeedbackBlock(nn.Module):
 
         self.last_hidden = output
 
+        output = self.CALayer(output)
+
         return output
 
     def reset_state(self):
         self.should_reset = True
 
 class RDCAN(nn.Module):
-    def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, act_type = 'prelu', norm_type = None):
+    def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, act_type = 'prelu', norm_type = None, train=True):
         super(RDCAN, self).__init__()
 
         if upscale_factor == 2:
@@ -114,6 +137,7 @@ class RDCAN(nn.Module):
             stride = 8
             padding = 2
             kernel_size = 12
+
 
         self.num_steps = num_steps
         self.num_features = num_features
@@ -146,6 +170,17 @@ class RDCAN(nn.Module):
                                   kernel_size=3,
                                   act_type=None, norm_type=norm_type)
 
+        for m in self.modules():
+            classname = m.__class__.__name__
+            if classname.find('Conv2d') != -1:
+                torch.nn.init.kaiming_normal_(m.weight)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+            elif classname.find('ConvTranspose2d') != -1:
+                torch.nn.init.kaiming_normal_(m.weight)
+                if m.bias is not None:
+                    m.bias.data.zero_()
+
         
         #self.add_mean = MeanShift(rgb_mean, rgb_std, 1)
 
@@ -162,11 +197,13 @@ class RDCAN(nn.Module):
         x = self.conv_in(x)
         x = self.feat_in(x)
         
+
         h = self.block(x)
 
         h = torch.add(inter_res, self.conv_out(self.out(h)))
-
+            #h = self.add_mean(h)
         return h
+
 
     def _reset_state(self):
         self.block.reset_state()

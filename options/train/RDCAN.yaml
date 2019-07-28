@@ -1,5 +1,5 @@
 #### general settings
-name: RDACN_TEST_EXP_04
+name: RDACN_EXP_03_CA
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -8,14 +8,14 @@ device: cuda
 
 #### datasets
 dataset:
-  scale: 4
+  scale: 2
   train:
     name: DIV2K
-    data_location: data/datasets/BSDS300/train/
+    data_location: data/datasets/DIV2K/train/
     shuffle: true
     n_workers: 0  # per GPU
-    batch_size: 25
-    lr_size: 16
+    batch_size: 20
+    lr_size: 40
     repeat: 1
   test:
     name: Set5
@@ -28,11 +28,12 @@ dataset:
 #### network structures
 network_G:
   model: RDCAN
-  num_features: 64
+  num_features: 32
   in_channels: 3
   out_channels: 3
-  num_steps: 4
-  num_groups: 6
+  num_steps: 4 # later use
+  num_groups: 3
+  train: true
 
 #### training settings: learning rate scheme, loss
 train:
@@ -48,7 +49,7 @@ train:
   lr_step: [200, 400, 600, 800]
   lr_gamma: 0.5
 
-  pixel_criterion: l2
+  pixel_criterion: l1
   pixel_weight: !!float 1e0
 
   manual_seed: 10

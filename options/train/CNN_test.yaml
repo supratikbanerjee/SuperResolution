@@ -8,14 +8,14 @@ device: cuda
 
 #### datasets
 dataset:
-  scale: 2
+  scale: 4
   train:
     name: BSDS300
-    data_location: data/datasets/BSDS300/train/
+    data_location: data/datasets/DIV2K/train/
     shuffle: true
     n_workers: 1  # per GPU
     batch_size: 25
-    lr_size: 16
+    lr_size: 32
     repeat: 1
   test:
     name: Set5

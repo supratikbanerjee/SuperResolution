@@ -1,10 +1,10 @@
-name: SRFBN_x2
+name: RDCAN_x2_100Epoch_RNN
 is_train: false
 model: cnn
 device: cuda
 
 dataset:
-  scale: 4
+  scale: 2
   test_1:
     name: Set5
     data_location: data/datasets/Set5/test/
@@ -26,17 +26,26 @@ dataset:
     n_workers: 1  # per GPU
     batch_size: 1
     repeat: 1
+  test_4:  # the 2st test dataset
+    name: DIV2K
+    data_location: data/datasets/DIV2K/test/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    repeat: 1
 
 #### network structures
 network_G:
-  model: SRFBN
-  num_features: 64
+  model: RDCAN
+  num_features: 32
   in_channels: 3
   out_channels: 3
-  num_steps: 1
-  num_groups: 6
+  num_steps: 4 # later use
+  num_groups: 3
+  train: false
+
 
 #### path
 path:
   experiments: trained_models/experiments/
-  pretrain_model_G: trained_models/100_SRFBN_x4_netG.pth
+  pretrain_model_G: trained_models/100_RDCAN_x2_netG_CA.pth

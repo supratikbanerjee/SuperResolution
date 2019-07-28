@@ -1,4 +1,4 @@
-name: SRFBN_x2
+name: DBPN_x4_100Epoch
 is_train: false
 model: cnn
 device: cuda
@@ -26,17 +26,23 @@ dataset:
     n_workers: 1  # per GPU
     batch_size: 1
     repeat: 1
+  test_4:  # the 2st test dataset
+    name: DIV2K
+    data_location: data/datasets/DIV2K/test/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    repeat: 1
 
 #### network structures
 network_G:
-  model: SRFBN
-  num_features: 64
+  model: DBPNS
+  num_features: 64 #DBPN
   in_channels: 3
-  out_channels: 3
-  num_steps: 1
-  num_groups: 6
+  out_channels: 18 #DBPN
+  num_blocks: 2
 
 #### path
 path:
   experiments: trained_models/experiments/
-  pretrain_model_G: trained_models/100_SRFBN_x4_netG.pth
+  pretrain_model_G: trained_models/100_DBPNS_x4_netG.pth

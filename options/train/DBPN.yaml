@@ -8,10 +8,10 @@ device: cuda
 
 #### datasets
 dataset:
-  scale: 2
+  scale: 4
   train:
     name: BSDS300
-    data_location: data/datasets/BSDS300/train/
+    data_location: data/datasets/DIV2K/train/
     shuffle: true
     n_workers: 1  # per GPU
     batch_size: 20
@@ -27,11 +27,11 @@ dataset:
     
 #### network structures
 network_G:
-  model: DDBPN
-  num_features: 64 #256 DBPN
+  model: DBPNS
+  num_features: 64 #DBPN
   in_channels: 3
-  out_channels: 3 #64 DBPN
-  num_blocks: 7
+  out_channels: 18 #DBPN
+  num_blocks: 2
 
 #### training settings: learning rate scheme, loss
 train:
@@ -51,11 +51,11 @@ train:
   pixel_weight: !!float 1e0
 
   manual_seed: 10
-  val_freq: 1 # epoch
+  val_freq: 5 # epoch
 
 #### logger
 logger:
-  print_freq: 1 # epoch
+  print_freq: 5 # epoch
   path: experiments/
   chkpt_freq: 10 # epoch
   

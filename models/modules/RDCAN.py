@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 from .blocks import ConvBlock, DeconvBlock, MeanShift
 
-
 class CALayer(nn.Module):
     def __init__(self, channel, reduction=8):
         super(CALayer, self).__init__()

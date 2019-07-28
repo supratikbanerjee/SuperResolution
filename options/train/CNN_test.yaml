@@ -1,7 +1,7 @@
 #### general settings
-name: SRCNN
+name: 1_FSRCNN_FOR_PRETRAIN
 is_train: true
-use_visdom: false
+use_visdom: true
 visdom_port: 8067
 model: cnn
 device: cuda
@@ -10,12 +10,12 @@ device: cuda
 dataset:
   scale: 2
   train:
-    name: BSDS300
+    name: DIV2K
     data_location: data/datasets/DIV2K/train/
     shuffle: true
     n_workers: 1  # per GPU
     batch_size: 20
-    lr_size: 40
+    lr_size: 256
     repeat: 1
   test:
     name: Set5
@@ -27,11 +27,11 @@ dataset:
 
 #### network structures
 network_G:
-  model: SRCNN
+  model: FSRCNN
 
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 100
+  epoch: 1000
   cl_train: false
   lr_G: !!float 1e-4
   weight_decay_G: 0

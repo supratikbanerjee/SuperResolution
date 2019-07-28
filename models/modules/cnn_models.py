@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from models import pac
 
 
 class SRCNN(nn.Module):
@@ -8,11 +7,11 @@ class SRCNN(nn.Module):
         super(SRCNN, self).__init__()
 
         self.upscale_factor = upscale_factor
-        self.conv1 = pac.PacConv2d(in_channels=3, out_channels=64, kernel_size=9, stride=1, padding=3)
-        self.conv2 = pac.PacConv2d(in_channels=64, out_channels=32, kernel_size=1, stride=1, padding=1)
-        self.conv3 = pac.PacConv2d(in_channels=32, out_channels=3, kernel_size=5, stride=1, padding=2)
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=9, stride=1, padding=3)
+        self.conv2 = nn.Conv2d(in_channels=64, out_channels=32, kernel_size=1, stride=1, padding=1)
+        self.conv3 = nn.Conv2d(in_channels=32, out_channels=3, kernel_size=5, stride=1, padding=2)
 
-        #self._initialize_weights()
+        self._initialize_weights()
 
     def forward(self, x):
         x = F.interpolate(x , scale_factor=self.upscale_factor, mode='bilinear')

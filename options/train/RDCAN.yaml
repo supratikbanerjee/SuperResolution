@@ -1,5 +1,5 @@
 #### general settings
-name: RDACN_EXP_01_CAFB
+name: 0001_RDACN_EXP_01_FSRCNN
 is_train: true
 use_visdom: false
 visdom_port: 8067

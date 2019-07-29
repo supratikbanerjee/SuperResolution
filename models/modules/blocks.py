@@ -3,6 +3,7 @@ import torch.nn as nn
 
 from collections import OrderedDict
 import sys
+from models import pac
 
 ################
 # Basic blocks
@@ -64,7 +65,7 @@ def sequential(*args):
 
 
 def ConvBlock(in_channels, out_channels, kernel_size, stride=1, dilation=1, bias=True, valid_padding=True, padding=0,\
-              act_type='relu', norm_type='bn', pad_type='zero', mode='CNA'):
+              act_type='relu', norm_type='bn', pad_type='zero', mode='CNA', pa=False):
     assert (mode in ['CNA', 'NAC']), '[ERROR] Wrong mode in [%s]!'%sys.modules[__name__]
 
     if valid_padding:
@@ -72,12 +73,15 @@ def ConvBlock(in_channels, out_channels, kernel_size, stride=1, dilation=1, bias
     else:
         pass
     p = pad(pad_type, padding) if pad_type and pad_type != 'zero' else None
-    conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
+    if pa:
+        conv = pac.PacConv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
+    else:
+        conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
 
     if mode == 'CNA':
         act = activation(act_type) if act_type else None
         n = norm(out_channels, norm_type) if norm_type else None
-        return sequential(p, conv, n, act)
+        return sequential(conv)
     elif mode == 'NAC':
         act = activation(act_type, inplace=False) if act_type else None
         n = norm(in_channels, norm_type) if norm_type else None

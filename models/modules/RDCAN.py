@@ -1,12 +1,18 @@
 import torch
 import torch.nn as nn
-from .blocks import ConvBlock, DeconvBlock, MeanShift
+from .blocks import ConvBlock, DeconvBlock, MeanShift, get_valid_padding
+from .cnn_models import FSRCNN
+from models import pac
+
 
 class CALayer(nn.Module):
     def __init__(self, channel, reduction=8):
         super(CALayer, self).__init__()
         # global average pooling: feature --> point
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        self.conv_in = nn.Conv2d(3, 3, kernel_size=2, stride=2, padding=0)
+        self.prelu1 = nn.PReLU(num_parameters=1, init=0.2)
+
+        self.avg_pool = pac.PacPool2d(1)
         # feature channel downscale and upscale --> channel weight
         self.conv_du = nn.Sequential(
                 nn.Conv2d(channel, channel // reduction, 1, padding=0, bias=True),
@@ -16,105 +22,93 @@ class CALayer(nn.Module):
         )
 
     def forward(self, x):
-        y = self.avg_pool(x)
+        guide = x[1]
+        x = x[0]
+        guide = self.prelu1(self.conv_in(guide))
+        # print(x.shape, guide.shape)
+        y = self.avg_pool(x, guide)
         y = self.conv_du(y)
         return x * y
 
+
+class UpBlock(nn.Module):
+    def __init__(self, idx, num_features, kernel_size, stride, padding):
+        super(UpBlock, self).__init__()
+        #print(num_features*(idx+1), num_features, idx)
+        self.upCompressIn = nn.Conv2d(num_features*(idx+1), num_features, kernel_size=1, stride=1, 
+                    padding=get_valid_padding(1, 1))
+        self.act1 = nn.PReLU(num_parameters=1, init=0.2)
+        self.upConv = nn.ConvTranspose2d(num_features, num_features, kernel_size, stride=stride, padding=padding)
+        self.act2 = nn.PReLU(num_parameters=1, init=0.2)
+
+    def forward(self, x):
+        x = self.act1(self.upCompressIn(x))
+        x = self.act2(self.upConv(x))
+        return x
+
+
+class DownBlock(nn.Module):
+    def __init__(self, idx, num_features, kernel_size, stride, padding):
+        super(DownBlock, self).__init__()
+        self.downCompressIn = nn.Conv2d(num_features*(idx+1), num_features, kernel_size=1, stride=1, 
+                    padding=get_valid_padding(1, 1))
+        self.act1 = nn.PReLU(num_parameters=1, init=0.2)
+        self.downConv = nn.Conv2d(num_features, num_features, kernel_size, stride=stride, padding=padding)
+        self.act2 = nn.PReLU(num_parameters=1, init=0.2)
+
+    def forward(self, x):
+        x = self.act1(self.downCompressIn(x))
+        x = self.act2(self.downConv(x))
+        return x
+
+
 class FeedbackBlock(nn.Module):
-    def __init__(self, num_features, num_groups, upscale_factor, act_type, norm_type, reduction):
+    def __init__(self, num_features, num_groups, upscale_factor, stride, kernel_size, reduction=8):
         super(FeedbackBlock, self).__init__()
-        if upscale_factor == 2:
-            stride = 2
-            padding = 2
-            kernel_size = 3
-        elif upscale_factor == 3:
-            stride = 3
-            padding = 2
-            kernel_size = 7
-        elif upscale_factor == 4:
-            stride = 4
-            padding = 2
-            kernel_size = 8
-        elif upscale_factor == 8:
-            stride = 8
-            padding = 2
-            kernel_size = 12
-
+        kernel_size = 2
+        padding = 0
         self.num_groups = num_groups
-
-        self.compress_in = ConvBlock(2*num_features, num_features,
-                                     kernel_size=1,
-                                     act_type=act_type, norm_type=norm_type)
 
         self.upBlocks = nn.ModuleList()
         self.downBlocks = nn.ModuleList()
-        self.uptranBlocks = nn.ModuleList()
-        self.downtranBlocks = nn.ModuleList()
 
         for idx in range(self.num_groups):
-            self.upBlocks.append(DeconvBlock(num_features, num_features,
-                                             kernel_size=kernel_size, stride=stride, padding=padding,
-                                             act_type=act_type, norm_type=norm_type))
-            self.downBlocks.append(ConvBlock(num_features, num_features,
-                                             kernel_size=kernel_size, stride=stride, padding=padding,
-                                             act_type=act_type, norm_type=norm_type, valid_padding=False))
-            if idx > 0:
-                self.uptranBlocks.append(ConvBlock(num_features*(idx+1), num_features,
-                                                   kernel_size=1, stride=1,
-                                                   act_type=act_type, norm_type=norm_type))
-                self.downtranBlocks.append(ConvBlock(num_features*(idx+1), num_features,
-                                                     kernel_size=1, stride=1,
-                                                     act_type=act_type, norm_type=norm_type))
+            self.upBlocks.append(UpBlock(idx, num_features, kernel_size, stride, padding=padding))
+            self.downBlocks.append(DownBlock(idx, num_features, kernel_size, stride, padding=padding))
 
-        self.compress_out = ConvBlock(num_groups*num_features, num_features,
-                                      kernel_size=1,
-                                      act_type=act_type, norm_type=norm_type)
+        self.compress_out = nn.Conv2d((num_groups)*num_features, num_features, kernel_size=1, 
+            padding=get_valid_padding(1, 1))
+        self.prelu2 = nn.PReLU(num_parameters=1, init=0.2)
 
         self.CALayer = CALayer(num_features, reduction)
 
-        self.should_reset = True
-        self.last_hidden = None
-
     def forward(self, x):
-        if self.should_reset:
-            self.last_hidden = torch.zeros(x.size()).cuda()
-            self.last_hidden.copy_(x)
-            self.should_reset = False
-
-        x = torch.cat((x, self.last_hidden), dim=1)
-        x = self.compress_in(x)
-
+        guide = x[1]
+        x = x[0]
         lr_features = []
-        hr_features = []
-        lr_features.append(x)
+
+        LD_L = torch.tensor([]).cuda()
+        LD_H = torch.tensor([]).cuda()
+        LD_L = torch.cat((LD_L, x), 1)
+        prev_LD = x
 
         for idx in range(self.num_groups):
-            LD_L = torch.cat(tuple(lr_features), 1)    # when idx == 0, lr_features == [x]
-            if idx > 0:
-                LD_L = self.uptranBlocks[idx-1](LD_L)
-            LD_H = self.upBlocks[idx](LD_L)
+            LD_H_o = self.upBlocks[idx](LD_L)
+            LD_H = torch.cat((LD_H, LD_H_o), 1)
 
-            hr_features.append(LD_H)
+            LD_L_o = self.downBlocks[idx](LD_H)
+            LD_L = torch.cat((LD_L, LD_L_o), 1)
 
-            LD_H = torch.cat(tuple(hr_features), 1)
-            if idx > 0:
-                LD_H = self.downtranBlocks[idx-1](LD_H)
-            LD_L = self.downBlocks[idx](LD_H)
+            lr_features.append(LD_L_o) #+prev_LD)
+            #prev_LD = LD_L_o
 
-            lr_features.append(LD_L)
-
-        del hr_features
-        output = torch.cat(tuple(lr_features[1:]), 1)   # leave out input x, i.e. lr_features[0]
+        output = torch.cat(tuple(lr_features), 1)
         output = self.compress_out(output)
-
-        self.last_hidden = output
-
-        output = self.CALayer(output)
+        output = self.prelu2(output)
+        output = self.CALayer((output, guide))
 
         return output
 
-    def reset_state(self):
-        self.should_reset = True
 
 class RDCAN(nn.Module):
     def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, act_type = 'prelu', norm_type = None, reduction=8):
@@ -122,19 +116,15 @@ class RDCAN(nn.Module):
 
         if upscale_factor == 2:
             stride = 2
-            padding = 2
             kernel_size = 6
         elif upscale_factor == 3:
             stride = 3
-            padding = 2
             kernel_size = 7
         elif upscale_factor == 4:
             stride = 4
-            padding = 2
             kernel_size = 8
         elif upscale_factor == 8:
             stride = 8
-            padding = 2
             kernel_size = 12
 
 
@@ -142,32 +132,25 @@ class RDCAN(nn.Module):
         self.num_features = num_features
         self.upscale_factor = upscale_factor
 
-        # RGB mean for DIV2K
-        # rgb_mean = (0.4488, 0.4371, 0.4040)
-        # rgb_std = (1.0, 1.0, 1.0)
-        # self.sub_mean = MeanShift(rgb_mean, rgb_std)
-
+        self.upscaleNet = FSRCNN(upscale_factor)
+        self.load()
+        
+        
         # LR feature extraction block
-        self.conv_in = ConvBlock(in_channels, 4*num_features,
-                                 kernel_size=3,
-                                 act_type=act_type, norm_type=norm_type)
-        self.feat_in = ConvBlock(4*num_features, num_features,
-                                 kernel_size=1,
-                                 act_type=act_type, norm_type=norm_type)
+        self.conv_in = nn.Conv2d(in_channels, 4*num_features, kernel_size=3, padding=get_valid_padding(3, 1))
+        self.prelu1 = nn.PReLU(num_parameters=1, init=0.2)
+        self.feat_in = nn.Conv2d(4*num_features, num_features, kernel_size=1, padding=get_valid_padding(1, 1))
+        self.prelu2 = nn.PReLU(num_parameters=1, init=0.2)
 
         # basic block
-        self.block = FeedbackBlock(num_features, num_groups, upscale_factor, act_type, norm_type, reduction)
+        self.block = FeedbackBlock(num_features, num_groups, upscale_factor, stride, kernel_size, reduction)
 
-        # reconstruction block
-        # uncomment for pytorch 0.4.0
-        # self.upsample = nn.Upsample(scale_factor=upscale_factor, mode='bilinear')
+        self.out = nn.ConvTranspose2d(num_features, num_features, kernel_size=kernel_size, stride= stride, padding=2)
+        self.prelu3 = nn.PReLU(num_parameters=1, init=0.2)
 
-        self.out = DeconvBlock(num_features, num_features,
-                               kernel_size=kernel_size, stride=stride, padding=padding,
-                               act_type='prelu', norm_type=norm_type)
-        self.conv_out = ConvBlock(num_features, out_channels,
-                                  kernel_size=3,
-                                  act_type=None, norm_type=norm_type)
+        self.conv_out = nn.Conv2d(num_features, out_channels, kernel_size=3, padding=get_valid_padding(3, 1))
+        self.prelu4 = nn.PReLU(num_parameters=1, init=0.2)
+
 
         for m in self.modules():
             classname = m.__class__.__name__
@@ -181,28 +164,23 @@ class RDCAN(nn.Module):
                     m.bias.data.zero_()
 
         
-        #self.add_mean = MeanShift(rgb_mean, rgb_std, 1)
 
     def forward(self, x):
-        self._reset_state()
 
-        #x = self.sub_mean(x)
-        # uncomment for pytorch 0.4.0
-        # inter_res = self.upsample(x)
-        
-        # comment for pytorch 0.4.0
+        guide = self.upscaleNet(x)
         inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
 
-        x = self.conv_in(x)
-        x = self.feat_in(x)
+        x = self.prelu1(self.conv_in(x))
+        x = self.prelu2(self.feat_in(x))        
+
+        h = self.block((x, guide))
         
-
-        h = self.block(x)
-
-        h = torch.add(inter_res, self.conv_out(self.out(h)))
-            #h = self.add_mean(h)
+        h = self.prelu3(self.out(h))
+        h = torch.add(inter_res, self.prelu4(self.conv_out(h)))
         return h
 
 
-    def _reset_state(self):
-        self.block.reset_state()
+    def load(self):
+        checkpoint = torch.load('trained_models/1000_FSRCNN_x2_netG.pth')
+        self.upscaleNet.load_state_dict(checkpoint['state_dict'])
+ 

@@ -81,7 +81,7 @@ class GAN():
 		self.netG.train()
 		self.netG.zero_grad()
 		real_features = self.netF(Variable(self.hr_real))
-		
+
 		pixel_loss_g = 0.0
 		feature_loss_g = 0.0
 		adversarial_loss_g = 0.0
@@ -90,6 +90,7 @@ class GAN():
 			fake_features = [self.netF(Variable(sr)) for sr in self.hr_fake]
 			loss_steps_f = [self.feature_criterion(sr, real_features)  for sr in fake_features]
 			probas = [self.netD(Variable(sr)) for sr in self.hr_fake]
+			### TODO RAGAN
 			loss_sets_a = [self.adversarial_criterion(proba, self.get_target(proba, True)) for proba in probas]
 			for step in range(len(loss_steps)):
 				pixel_loss_g += self.pixel_weight * loss_steps[step]
@@ -100,7 +101,14 @@ class GAN():
 			pixel_loss_g = self.pixel_weight * self.pixel_criterion(self.hr_fake, self.hr_real) 
 			feature_loss_g = self.feature_weight * self.feature_criterion(fake_features, real_features)
 			proba = self.netD(self.hr_fake)
-			adversarial_loss_g = self.adversarial_weight * self.adversarial_criterion(proba, self.get_target(proba, True))
+
+			if self.train_config['gan_type'] == 'gan':
+				adversarial_loss_g = self.adversarial_weight * self.adversarial_criterion(proba, self.get_target(proba, True))
+			elif self.train_config['gan_type'] == 'ragan':
+				proba_r = self.netD(self.hr_fake)
+				adversarial_loss_g = self.adversarial_weight * (
+					self.adversarial_criterion(proba_r - torch.mean(proba), self.get_target(proba_r, False)) +
+					self.adversarial_criterion(proba - torch.mean(proba_r), self.get_target(proba, True))) / 2
 
 		content_loss = pixel_loss_g + feature_loss_g
 		perceptual_loss = content_loss + adversarial_loss_g 
@@ -114,21 +122,29 @@ class GAN():
 		#return total_loss_g.item()
 
 	def train_discriminator(self):
+
 		#self.scheduler_D.step()
 		self.netD.train()
 		self.netD.zero_grad()
 		real_proba = self.netD(self.hr_real)
-		real_loss_d = self.adversarial_criterion(real_proba, self.get_target(real_proba, True))
+		
 
 		fake_loss_d = 0.0
 		if self.train_config['cl_train']:
 			fake_probas = [self.netD(Variable(sr)) for sr in self.hr_fake]
+			real_loss_d = self.adversarial_criterion(real_proba, self.get_target(real_proba, True))
 			loss_sets_d = [self.adversarial_criterion(fake_proba, self.get_target(fake_proba, False)) for fake_proba in fake_probas]
 			for step in range(len(loss_sets_d)):
 				fake_loss_d += loss_sets_d[step]
 		else:
 			fake_proba = self.netD(Variable(self.hr_fake))
-			fake_loss_d = self.adversarial_criterion(fake_proba, self.get_target(fake_proba, False))
+			if self.train_config['gan_type'] == 'gan':
+				real_loss_d = self.adversarial_criterion(real_proba, self.get_target(real_proba, True))
+				fake_loss_d = self.adversarial_criterion(fake_proba, self.get_target(fake_proba, False))
+			elif self.train_config['gan_type'] == 'ragan':
+				proba_r = self.netD(self.hr_fake)
+				real_loss_d = self.adversarial_criterion(real_proba - torch.mean(fake_proba), self.get_target(real_proba, True)) /2
+				fake_loss_d = self.adversarial_criterion(fake_proba - torch.mean(real_proba), self.get_target(fake_proba, False)) /2
 
 		#print(real_proba, fake_proba)
 		total_loss_d = ( self.real_weightD * real_loss_d + self.fake_weightD * fake_loss_d)

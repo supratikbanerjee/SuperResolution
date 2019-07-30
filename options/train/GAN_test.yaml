@@ -14,7 +14,7 @@ dataset:
     data_location: data/datasets/BSDS300/train/
     shuffle: true
     n_workers: 1  # per GPU
-    batch_size: 25
+    batch_size: 16
     lr_size: 32
     repeat: 2
   test:
@@ -27,11 +27,16 @@ dataset:
 
 #### network structures
 network_G:
-  model: SRResNet
-  layers: 16
+  model: RDCAN
+  num_features: 32
+  in_channels: 3
+  out_channels: 3
+  num_steps: 8 # later use
+  num_groups: 3
+  reduction: 8
 
 network_D:
-  model: LeakyVGG
+  model: discriminator_vgg_128
   in_nc: 3
   nf: 64
 #### training settings: learning rate scheme, loss
@@ -53,12 +58,12 @@ train:
   lr_gamma: 0.5
 
   pixel_criterion: l2
-  pixel_weight: !!float 1e0
+  pixel_weight: !!float 1e-2
   feature_criterion: ARG
-  feature_weight: !!float 6e-3
-  adversarial_criterion: ARD
-  gan_type: gan  # gan | ragan
-  gan_weight: !!float 1e-3
+  feature_weight: !!float 1
+  adversarial_criterion: BCEL
+  gan_type: ragan  # gan | ragan
+  gan_weight: !!float 5e-3
   feature_extractor: vgg19
 
   real_weightD: 0.5

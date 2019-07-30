@@ -109,7 +109,7 @@ def loss_criterion(loss):
 		criterion = nn.MSELoss()
 	elif loss == 'BCEL':
 		criterion = nn.BCEWithLogitsLoss()
-	elif loss == 'BCEL':
+	elif loss == 'BCE':
 		criterion = nn.BCELoss()
 	elif loss == 'ARG':
 		criterion = ar_loss.AdaptiveRobustLoss('G')

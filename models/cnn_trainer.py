@@ -25,6 +25,10 @@ class CNN():
 
 			self.pixel_weight = self.train_config['pixel_weight']
 
+			if self.train_config['pixel_criterion'] == 'ADAPTIVE':
+				params = list(self.netG.parameters()) + list(self.pixel_criterion.parameters())
+			else:
+				params = self.netG.parameters()
 
 			self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=self.train_config['lr_G'],
 	                                                weight_decay=self.train_config['weight_decay_G'],
@@ -55,7 +59,6 @@ class CNN():
 		self.netG.train()
 		self.netG.zero_grad()
 		self.hr_fake = self.netG(self.lr_input)
-		#print(self.hr_fake[0].shape, len(self.hr_fake))
 		pixel_loss_g = 0.0
 		if self.train_config['cl_train']:
 			loss_steps = [self.pixel_criterion(sr, self.hr_real)  for sr in self.hr_fake]
@@ -66,7 +69,7 @@ class CNN():
 		pixel_loss_g.backward()
 		self.optimizer_G.step()
 		self.logs['p_G'] = pixel_loss_g.item()
-		if isinstance(self.hr_fake, list):
+		if isinstance(self.hr_fake, list): # to get visuals
 				self.hr_fake = self.hr_fake[-1]
 
 	def test(self, batch):
@@ -78,6 +81,9 @@ class CNN():
 			infer_time = time.time() - infer_time_start
 			if isinstance(self.hr_fake, list):
 				self.hr_fake = self.hr_fake[-1]
+		valid_loss = self.pixel_weight * self.pixel_criterion(self.hr_fake, self.hr_real)
+		self.logs['v_l'] = valid_loss.item()
+
 		return infer_time
 
 	def save(self, epoch):
@@ -91,7 +97,8 @@ class CNN():
 
 	def plot_loss(self, visualizer, epoch):
 		loss_g = defaultdict(list)
-		loss_g['pixel'] = self.logs['p_G']
+		loss_g['train'] = self.logs['p_G']
+		loss_g['valid'] = self.logs['v_l']
 		visualizer.plot(loss_g, epoch, 'Generator Loss', 'loss')
 
 	def print_network_params(self, logger):

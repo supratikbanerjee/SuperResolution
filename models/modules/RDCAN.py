@@ -9,10 +9,7 @@ class CALayer(nn.Module):
     def __init__(self, channel, reduction=8):
         super(CALayer, self).__init__()
         # global average pooling: feature --> point
-        self.conv_in = nn.Conv2d(3, 3, kernel_size=2, stride=2, padding=0)
-        self.prelu1 = nn.PReLU(num_parameters=1, init=0.2)
-
-        self.avg_pool = pac.PacPool2d(1)
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
         # feature channel downscale and upscale --> channel weight
         self.conv_du = nn.Sequential(
                 nn.Conv2d(channel, channel // reduction, 1, padding=0, bias=True),
@@ -22,11 +19,7 @@ class CALayer(nn.Module):
         )
 
     def forward(self, x):
-        guide = x[1]
-        x = x[0]
-        guide = self.prelu1(self.conv_in(guide))
-        # print(x.shape, guide.shape)
-        y = self.avg_pool(x, guide)
+        y = self.avg_pool(x)
         y = self.conv_du(y)
         return x * y
 
@@ -50,14 +43,16 @@ class UpBlock(nn.Module):
 class DownBlock(nn.Module):
     def __init__(self, idx, num_features, kernel_size, stride, padding):
         super(DownBlock, self).__init__()
-        self.downCompressIn = nn.Conv2d(num_features*(idx+1), num_features, kernel_size=1, stride=1, 
+        self.downCompressIn = pac.PacConv2d(num_features*(idx+1), num_features, kernel_size=1, stride=1, 
                     padding=get_valid_padding(1, 1))
         self.act1 = nn.PReLU(num_parameters=1, init=0.2)
         self.downConv = nn.Conv2d(num_features, num_features, kernel_size, stride=stride, padding=padding)
         self.act2 = nn.PReLU(num_parameters=1, init=0.2)
 
     def forward(self, x):
-        x = self.act1(self.downCompressIn(x))
+        guide = x[1]
+        x = x[0]
+        x = self.act1(self.downCompressIn(x, guide))
         x = self.act2(self.downConv(x))
         return x
 
@@ -65,8 +60,8 @@ class DownBlock(nn.Module):
 class FeedbackBlock(nn.Module):
     def __init__(self, num_features, num_groups, upscale_factor, stride, kernel_size, reduction=8):
         super(FeedbackBlock, self).__init__()
-        kernel_size = 2
-        padding = 0
+        kernel_size = 6
+        padding = 2
         self.num_groups = num_groups
 
         self.upBlocks = nn.ModuleList()
@@ -96,7 +91,7 @@ class FeedbackBlock(nn.Module):
             LD_H_o = self.upBlocks[idx](LD_L)
             LD_H = torch.cat((LD_H, LD_H_o), 1)
 
-            LD_L_o = self.downBlocks[idx](LD_H)
+            LD_L_o = self.downBlocks[idx]((LD_H, guide))
             LD_L = torch.cat((LD_L, LD_L_o), 1)
 
             lr_features.append(LD_L_o) #+prev_LD)
@@ -105,7 +100,7 @@ class FeedbackBlock(nn.Module):
         output = torch.cat(tuple(lr_features), 1)
         output = self.compress_out(output)
         output = self.prelu2(output)
-        output = self.CALayer((output, guide))
+        output = self.CALayer(output)
 
         return output
 

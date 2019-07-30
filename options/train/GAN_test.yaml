@@ -1,7 +1,7 @@
 #### general settings
 name: GAN_TEST_01
 is_train: true
-use_visdom: false
+use_visdom: true
 visdom_port: 8067
 model: gan
 device: cuda
@@ -13,9 +13,9 @@ dataset:
     name: BSDS300
     data_location: data/datasets/BSDS300/train/
     shuffle: true
-    n_workers: 6  # per GPU
-    batch_size: 5
-    lr_size: 128
+    n_workers: 1  # per GPU
+    batch_size: 25
+    lr_size: 32
     repeat: 2
   test:
     name: Set5
@@ -54,9 +54,9 @@ train:
 
   pixel_criterion: l2
   pixel_weight: !!float 1e0
-  feature_criterion: l2
+  feature_criterion: ARG
   feature_weight: !!float 6e-3
-  adversarial_criterion: BCEL
+  adversarial_criterion: ARD
   gan_type: gan  # gan | ragan
   gan_weight: !!float 1e-3
   feature_extractor: vgg19
@@ -65,11 +65,11 @@ train:
   fake_weightD: 0.5
 
   manual_seed: 10
-  val_freq: 6 # epoch
+  val_freq: 5 # epoch
 
 #### logger
 logger:
-  print_freq: 5 # epoch
+  print_freq: 6 # epoch
   path: experiments/
   chkpt_freq: 2 # epoch
   

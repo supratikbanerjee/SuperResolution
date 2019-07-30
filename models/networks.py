@@ -12,6 +12,8 @@ import models.modules.RDCAN as RDCAN_arch
 import models.modules.srfbn_arch as SRFBN_arch
 import models.modules.DBPN.dbpn as DBPN
 import models.modules.DBPN.dbpns as DBPNS
+from models import ar_loss
+
 # Generator
 def define_G(config):
 	net_config = config['network_G']
@@ -109,6 +111,10 @@ def loss_criterion(loss):
 		criterion = nn.BCEWithLogitsLoss()
 	elif loss == 'BCEL':
 		criterion = nn.BCELoss()
+	elif loss == 'ARG':
+		criterion = ar_loss.AdaptiveRobustLoss('G')
+	elif loss == 'ARD':
+		criterion = ar_loss.AdaptiveRobustLoss('D')
 	else:
 		raise NotImplementedError('Loss type [{:s}] not recognized.'.format(loss))
 	return criterion

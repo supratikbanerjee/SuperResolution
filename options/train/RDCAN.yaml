@@ -1,7 +1,7 @@
 #### general settings
 name: 0001_RDACN_EXP_01_FSRCNN
 is_train: true
-use_visdom: false
+use_visdom: true
 visdom_port: 8067
 model: cnn
 device: cuda
@@ -57,7 +57,7 @@ train:
 
 #### logger
 logger:
-  print_freq: 5 # epoch
+  print_freq: 6 # epoch
   path: experiments/
   chkpt_freq: 2 # epoch
   

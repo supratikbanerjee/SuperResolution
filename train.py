@@ -94,6 +94,7 @@ def main(config):
 				visuals['HR'] = util.tensor2img(visuals['HR'])
 				visualizer.display_current_results(visuals, epoch)
 				trainer.plot_loss(visualizer, epoch)
+				
 			iter_start_time = time.time()
 
         ##### Start Validation #####

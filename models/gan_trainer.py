@@ -34,17 +34,31 @@ class GAN():
 			self.real_weightD = self.train_config['real_weightD']
 			self.fake_weightD = self.train_config['fake_weightD']
 
-			self.optimizer_G = torch.optim.Adam(self.netG.parameters(), lr=self.train_config['lr_G'],
+			if self.train_config['pixel_criterion'] == 'ADAPTIVE':
+				paramsG = list(self.netG.parameters()) + list(self.pixel_criterion.parameters())
+			else:
+				paramsG = self.netG.parameters()
+
+			if self.train_config['adversarial_criterion'] == 'ADAPTIVE':
+				paramsD = list(self.netD.parameters()) + list(self.pixel_criterion.parameters())
+			else:
+				paramsD = self.netD.parameters()
+
+			self.optimizer_G = torch.optim.Adam(paramsG, lr=self.train_config['lr_G'],
 	                                                weight_decay=self.train_config['weight_decay_G'],
 	                                                betas=(self.train_config['beta1_G'], self.train_config['beta2_G']))
-			#self.scheduler_G = torch.optim.lr_scheduler.StepLR(self.optimizer_G, step_size=train_config['lr_step'], 
-			#	gamma=train_config['lr_gamma'])
+			if self.train_config['lr_scheme'] == 'MultiStepLR':
+				self.scheduler_G = torch.optim.lr_scheduler.MultiStepLR(self.optimizer_G, 
+					self.train_config['lr_step'], 
+					self.train_config['lr_gamma'])
 
-			self.optimizer_D = torch.optim.Adam(self.netD.parameters(), lr=self.train_config['lr_D'],
+			self.optimizer_D = torch.optim.Adam(paramsD, lr=self.train_config['lr_D'],
 	                                                weight_decay=self.train_config['weight_decay_D'],
 	                                                betas=(self.train_config['beta1_D'], self.train_config['beta2_D']))
-			#self.scheduler_D = torch.optim.lr_scheduler.StepLR(self.optimizer_D, step_size=train_config['lr_step'], 
-			#	gamma=train_config['lr_gamma'])
+			if self.train_config['lr_scheme'] == 'MultiStepLR':
+				self.scheduler_D = torch.optim.lr_scheduler.MultiStepLR(self.optimizer_D, 
+					self.train_config['lr_step'], 
+					self.train_config['lr_gamma'])
 		else:
 			self.load()
 
@@ -143,6 +157,9 @@ class GAN():
 			infer_time = time.time() - infer_time_start
 			if isinstance(self.hr_fake, list):
 				self.hr_fake = self.hr_fake[-1]
+		valid_loss = self.pixel_weight * self.pixel_criterion(self.hr_fake, self.hr_real)
+		self.logs['v_l'] = valid_loss.item()
+
 		return infer_time
 
 	def save(self, epoch):
@@ -158,6 +175,9 @@ class GAN():
 		loss_g = defaultdict(list)
 		loss_d = defaultdict(list)
 		loss_G_vs_D = defaultdict(list)
+		loss_tv = defaultdict(list)
+		loss_tv['train'] = self.logs['p_G']
+		loss_tv['valid'] = self.logs['v_l']
 		loss_g['pixel'] = self.logs['p_G']
 		loss_g['feature'] =  self.logs['f_G']
 		loss_g['adversarial'] = self.logs['a_G']
@@ -165,6 +185,7 @@ class GAN():
 		loss_d['fale'] = self.logs['f_D']
 		loss_G_vs_D['perceptual (G)'] = self.logs['totalG']
 		loss_G_vs_D['adversarial (D)'] = self.logs['totalD']
+		visualizer.plot(loss_tv, epoch, 'Train VS Valid Loss', 'loss')
 		visualizer.plot(loss_g, epoch, 'Generator Loss', 'loss')
 		visualizer.plot(loss_d, epoch, 'Discriminator Loss', 'loss')
 		visualizer.plot(loss_G_vs_D, epoch, 'Generator vs Discriminator Loss', 'loss')

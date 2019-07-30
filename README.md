@@ -14,6 +14,8 @@
   * pyyaml
   * visdom
   * tqdm
+  * robust loss (https://github.com/jonbarron/robust_loss_pytorch.git)
+  * pacnet (https://github.com/jonbarron/robust_loss_pytorch.git) [already included in this repo!!!]
 
 #### Install Dependencies
 ```
@@ -35,6 +37,9 @@ conda install -c conda-forge pyyaml
 
 # Install tqdm
 conda install -c conda-forge tqdm
+
+# Install Robust Loss
+pip install git+https://github.com/jonbarron/robust_loss_pytorch
 ```
 
 ### Datasets

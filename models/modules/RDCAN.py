@@ -28,14 +28,16 @@ class UpBlock(nn.Module):
     def __init__(self, idx, num_features, kernel_size, stride, padding):
         super(UpBlock, self).__init__()
         #print(num_features*(idx+1), num_features, idx)
-        self.upCompressIn = nn.Conv2d(num_features*(idx+1), num_features, kernel_size=1, stride=1, 
+        self.upCompressIn = pac.PacConv2d(num_features*(idx+1), num_features, kernel_size=1, stride=1, 
                     padding=get_valid_padding(1, 1))
         self.act1 = nn.PReLU(num_parameters=1, init=0.2)
         self.upConv = nn.ConvTranspose2d(num_features, num_features, kernel_size, stride=stride, padding=padding)
         self.act2 = nn.PReLU(num_parameters=1, init=0.2)
 
     def forward(self, x):
-        x = self.act1(self.upCompressIn(x))
+        guide = x[1]
+        x = x[0]
+        x = self.act1(self.upCompressIn(x, guide))
         x = self.act2(self.upConv(x))
         return x
 
@@ -71,16 +73,17 @@ class FeedbackBlock(nn.Module):
             self.upBlocks.append(UpBlock(idx, num_features, kernel_size, stride, padding=padding))
             self.downBlocks.append(DownBlock(idx, num_features, kernel_size, stride, padding=padding))
 
-        self.compress_out = nn.Conv2d((num_groups)*num_features, num_features, kernel_size=1, 
+        self.compress_out = nn.Conv2d((num_groups+1)*num_features, num_features, kernel_size=1, 
             padding=get_valid_padding(1, 1))
         self.prelu2 = nn.PReLU(num_parameters=1, init=0.2)
 
         self.CALayer = CALayer(num_features, reduction)
 
     def forward(self, x):
+        guide_h = x[2]
         guide = x[1]
         x = x[0]
-        lr_features = []
+        #lr_features = []
 
         LD_L = torch.tensor([]).cuda()
         LD_H = torch.tensor([]).cuda()
@@ -88,17 +91,17 @@ class FeedbackBlock(nn.Module):
         prev_LD = x
 
         for idx in range(self.num_groups):
-            LD_H_o = self.upBlocks[idx](LD_L)
+            LD_H_o = self.upBlocks[idx]((LD_L, guide))
             LD_H = torch.cat((LD_H, LD_H_o), 1)
 
-            LD_L_o = self.downBlocks[idx]((LD_H, guide))
+            LD_L_o = self.downBlocks[idx]((LD_H, guide_h))
             LD_L = torch.cat((LD_L, LD_L_o), 1)
 
-            lr_features.append(LD_L_o) #+prev_LD)
+            #lr_features.append(LD_L_o) #+prev_LD)
             #prev_LD = LD_L_o
 
-        output = torch.cat(tuple(lr_features), 1)
-        output = self.compress_out(output)
+        #output = torch.cat(tuple(lr_features), 1)
+        output = self.compress_out(LD_L)
         output = self.prelu2(output)
         output = self.CALayer(output)
 
@@ -106,7 +109,7 @@ class FeedbackBlock(nn.Module):
 
 
 class RDCAN(nn.Module):
-    def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, act_type = 'prelu', norm_type = None, reduction=8):
+    def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, reduction=8):
         super(RDCAN, self).__init__()
 
         if upscale_factor == 2:
@@ -134,7 +137,7 @@ class RDCAN(nn.Module):
         # LR feature extraction block
         self.conv_in = nn.Conv2d(in_channels, 4*num_features, kernel_size=3, padding=get_valid_padding(3, 1))
         self.prelu1 = nn.PReLU(num_parameters=1, init=0.2)
-        self.feat_in = nn.Conv2d(4*num_features, num_features, kernel_size=1, padding=get_valid_padding(1, 1))
+        self.feat_in = pac.PacConv2d(4*num_features, num_features, kernel_size=1, padding=get_valid_padding(1, 1))
         self.prelu2 = nn.PReLU(num_parameters=1, init=0.2)
 
         # basic block
@@ -162,16 +165,18 @@ class RDCAN(nn.Module):
 
     def forward(self, x):
 
-        guide = self.upscaleNet(x)
-        inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
+        guide = x
+        guide_h = self.upscaleNet(x)
+        #inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
 
         x = self.prelu1(self.conv_in(x))
-        x = self.prelu2(self.feat_in(x))        
+        x = self.prelu2(self.feat_in(x, guide))        
 
-        h = self.block((x, guide))
+        h = self.block((x, guide, guide_h))
         
         h = self.prelu3(self.out(h))
-        h = torch.add(inter_res, self.prelu4(self.conv_out(h)))
+        h = self.prelu4(self.conv_out(h))
+        #h = torch.add(inter_res, h)
         return h
 
 

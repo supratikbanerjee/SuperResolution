@@ -27,13 +27,11 @@ dataset:
 
 #### network structures
 network_G:
-  model: RDCAN
-  num_features: 32
-  in_channels: 3
-  out_channels: 3
-  num_steps: 8 # later use
-  num_groups: 3
-  reduction: 8
+  model: RRDBNet
+  in_nc: 3
+  out_nc: 3
+  nf: 64
+  nb: 23
 
 network_D:
   model: discriminator_vgg_128
@@ -57,9 +55,9 @@ train:
   lr_step: [200, 400, 600, 800]
   lr_gamma: 0.5
 
-  pixel_criterion: l2
+  pixel_criterion: l1
   pixel_weight: !!float 1e-2
-  feature_criterion: ARG
+  feature_criterion: l1
   feature_weight: !!float 1
   adversarial_criterion: BCEL
   gan_type: ragan  # gan | ragan

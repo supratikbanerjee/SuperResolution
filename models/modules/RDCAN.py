@@ -73,7 +73,7 @@ class FeedbackBlock(nn.Module):
             self.upBlocks.append(UpBlock(idx, num_features, kernel_size, stride, padding=padding))
             self.downBlocks.append(DownBlock(idx, num_features, kernel_size, stride, padding=padding))
 
-        self.compress_out = nn.Conv2d((num_groups+1)*num_features, num_features, kernel_size=1, 
+        self.compress_out = nn.Conv2d((num_groups)*num_features, num_features, kernel_size=1, 
             padding=get_valid_padding(1, 1))
         self.prelu2 = nn.PReLU(num_parameters=1, init=0.2)
 
@@ -83,7 +83,7 @@ class FeedbackBlock(nn.Module):
         guide_h = x[2]
         guide = x[1]
         x = x[0]
-        #lr_features = []
+        lr_features = []
 
         LD_L = torch.tensor([]).cuda()
         LD_H = torch.tensor([]).cuda()
@@ -97,13 +97,15 @@ class FeedbackBlock(nn.Module):
             LD_L_o = self.downBlocks[idx]((LD_H, guide_h))
             LD_L = torch.cat((LD_L, LD_L_o), 1)
 
-            #lr_features.append(LD_L_o) #+prev_LD)
-            #prev_LD = LD_L_o
+            lr_features.append(LD_L_o + prev_LD)
+            prev_LD = LD_L_o
 
-        #output = torch.cat(tuple(lr_features), 1)
-        output = self.compress_out(LD_L)
+        output = torch.cat(tuple(lr_features), 1)
+        output = self.compress_out(output)
         output = self.prelu2(output)
         output = self.CALayer(output)
+
+        res = output + x
 
         return output
 
@@ -167,7 +169,7 @@ class RDCAN(nn.Module):
 
         guide = x
         guide_h = self.upscaleNet(x)
-        #inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
+        inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
 
         x = self.prelu1(self.conv_in(x))
         x = self.prelu2(self.feat_in(x, guide))        
@@ -176,7 +178,7 @@ class RDCAN(nn.Module):
         
         h = self.prelu3(self.out(h))
         h = self.prelu4(self.conv_out(h))
-        #h = torch.add(inter_res, h)
+        h = torch.add(inter_res, h)
         return h
 
 

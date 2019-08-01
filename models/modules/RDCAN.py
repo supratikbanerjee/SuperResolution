@@ -12,7 +12,7 @@ class CALayer(nn.Module):
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         # feature channel downscale and upscale --> channel weight
         self.conv_down = pac.PacConv2d(channel, channel // reduction, 1, padding=0, bias=True)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.PReLU(num_parameters=1, init=0.2)
         self.conv_up = pac.PacConv2d(channel // reduction, channel, 1, padding=0, bias=True)
         self.sig = nn.Sigmoid()
         

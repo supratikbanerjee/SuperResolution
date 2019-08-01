@@ -34,12 +34,12 @@ class LWSR(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=4*feature, out_channels=feature, kernel_size=1, stride=1, padding=0)
         self.prelu2 = nn.LeakyReLU(0.2, inplace=True)
 
-        #self.upConv = nn.ConvTranspose2d(feature, feature, kernel_size=2, stride=2, padding=2)
-        #self.act1 = nn.PReLU(num_parameters=1, init=0.2)
-        #self.downCompressIn = pac.PacConv2d(feature, feature, kernel_size=1, stride=1,padding=0)
-        #self.act2 = nn.PReLU(num_parameters=1, init=0.2)
-        #self.downConv = nn.Conv2d(feature, feature, kernel_size=2, stride=2, padding=2)
-        #self.act3 = nn.PReLU(num_parameters=1, init=0.2)
+        self.upConv = nn.ConvTranspose2d(feature, feature, kernel_size=2, stride=2, padding=2)
+        self.act1 = nn.PReLU(num_parameters=1, init=0.2)
+        self.downCompressIn = pac.PacConv2d(feature, feature, kernel_size=1, stride=1,padding=0)
+        self.act2 = nn.PReLU(num_parameters=1, init=0.2)
+        self.downConv = nn.Conv2d(feature, feature, kernel_size=2, stride=2, padding=2)
+        self.act3 = nn.PReLU(num_parameters=1, init=0.2)
 
         #self.se = CALayer(feature)
         self.deconv1 = nn.ConvTranspose2d(in_channels=feature, out_channels=feature, kernel_size=6, stride=upscale_factor, padding=2)

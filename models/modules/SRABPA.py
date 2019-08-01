@@ -1,6 +1,30 @@
 import torch
 import torch.nn as nn
 from .blocks import ConvBlock, DeconvBlock, MeanShift
+from models import pac
+
+
+class CALayer(nn.Module):
+    def __init__(self, channel, reduction=8):
+        super(CALayer, self).__init__()
+        # global average pooling: feature --> point
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        # feature channel downscale and upscale --> channel weight
+        self.conv_down = pac.PacConv2d(channel, channel // reduction, 1, padding=0, bias=True)
+        self.relu = nn.PReLU(num_parameters=1, init=0.2)
+        self.conv_up = pac.PacConv2d(channel // reduction, channel, 1, padding=0, bias=True)
+        self.sig = nn.Sigmoid()
+        
+
+    def forward(self, x):
+        #print(x.shape)
+        y = self.avg_pool(x)
+        y = self.conv_down(y, y)
+        y = self.relu(y)
+        y = self.conv_up(y, y)
+        y = self.sig(y)
+        return x * y
+
 
 class FeedbackBlock(nn.Module):
     def __init__(self, num_features, num_groups, upscale_factor, act_type, norm_type):
@@ -24,7 +48,7 @@ class FeedbackBlock(nn.Module):
 
         self.num_groups = num_groups
 
-        self.compress_in = ConvBlock(2*num_features, num_features,
+        self.compress_in = ConvBlock(num_features, num_features,
                                      kernel_size=1,
                                      act_type=act_type, norm_type=norm_type)
 
@@ -61,7 +85,7 @@ class FeedbackBlock(nn.Module):
             self.last_hidden.copy_(x)
             self.should_reset = False
 
-        x = torch.cat((x, self.last_hidden), dim=1)
+        # x = torch.cat((x, self.last_hidden), dim=1)
         x = self.compress_in(x)
 
         lr_features = []
@@ -87,16 +111,16 @@ class FeedbackBlock(nn.Module):
         output = torch.cat(tuple(lr_features[1:]), 1)   # leave out input x, i.e. lr_features[0]
         output = self.compress_out(output)
 
-        self.last_hidden = output
+        #self.last_hidden = output
 
         return output
 
     def reset_state(self):
         self.should_reset = True
 
-class SRFBN(nn.Module):
+class SRABPA(nn.Module):
     def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, act_type = 'prelu', norm_type = None):
-        super(SRFBN, self).__init__()
+        super(SRABPA, self).__init__()
 
         if upscale_factor == 2:
             stride = 2
@@ -162,15 +186,11 @@ class SRFBN(nn.Module):
         x = self.conv_in(x)
         x = self.feat_in(x)
 
-        outs = []
-        for _ in range(self.num_steps):
-            h = self.block(x)
+        h = self.block(x)
 
-            h = torch.add(inter_res, self.conv_out(self.out(h)))
-            #h = self.add_mean(h)
-            outs.append(h)
-
-        return outs # return output of every timesteps
+        h = torch.add(inter_res, self.conv_out(self.out(h)))
+        #h = self.add_mean(h)
+        return h
 
     def _reset_state(self):
         self.block.reset_state()

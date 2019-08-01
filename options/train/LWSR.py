@@ -1,5 +1,5 @@
 #### general settings
-name: 0001_RDACN_EXP_01_FSRCNN
+name: 1_SRCNN_FOR_PRETRAIN
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -13,9 +13,9 @@ dataset:
     name: DIV2K
     data_location: data/datasets/BSDS300/train/
     shuffle: true
-    n_workers: 0  # per GPU
+    n_workers: 1  # per GPU
     batch_size: 20
-    lr_size: 40
+    lr_size: 32
     repeat: 1
   test:
     name: Set5
@@ -27,18 +27,11 @@ dataset:
 
 #### network structures
 network_G:
-  model: RDCAN
-  num_features: 16
-  in_channels: 3
-  out_channels: 3
-  num_steps: 8 # later use
-  num_groups: 1
-  reduction: 4
+  model: SRCNN
 
 #### training settings: learning rate scheme, loss
 train:
   epoch: 100
-
   cl_train: false
   lr_G: !!float 1e-4
   weight_decay_G: 0
@@ -49,7 +42,7 @@ train:
   lr_step: [200, 400, 600, 800]
   lr_gamma: 0.5
 
-  pixel_criterion: l1
+  pixel_criterion: l2
   pixel_weight: !!float 1e0
 
   manual_seed: 10
@@ -57,7 +50,7 @@ train:
 
 #### logger
 logger:
-  print_freq: 6 # epoch
+  print_freq: 5 # epoch
   path: experiments/
-  chkpt_freq: 2 # epoch
+  chkpt_freq: 10 # epoch
   

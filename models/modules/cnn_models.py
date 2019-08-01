@@ -9,22 +9,22 @@ class SRCNN(nn.Module):
 
         self.upscale_factor = upscale_factor
         self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=9, stride=1, padding=4)
-        self.conv2 = pac.PacConv2d(in_channels=64, out_channels=32, kernel_size=1, stride=1, padding=0)
+        self.act1 = nn.PReLU(num_parameters=1, init=0.2)
+        self.conv2 = nn.Conv2d(in_channels=64, out_channels=32, kernel_size=1, stride=1, padding=0)
+        self.act2 = nn.PReLU(num_parameters=1, init=0.2)
         self.conv3 = nn.Conv2d(in_channels=32, out_channels=3, kernel_size=5, stride=1, padding=2)
 
-        self.upscaleNet = FSRCNN(upscale_factor)
-        self.load()
+
 
         self._initialize_weights()
 
     def forward(self, x):
-        guide = self.upscaleNet(x)
         x = F.interpolate(x , scale_factor=self.upscale_factor, mode='bilinear')
         #print(x.shape, guide.shape)
         x = self.conv1(x)
-        x = F.relu(x)
-        x = self.conv2(x, guide)
-        x = F.relu(x)
+        x = self.act1(x)
+        x = self.conv2(x)
+        x = self.act2(x)
         x = self.conv3(x)
         return x
 
@@ -34,9 +34,7 @@ class SRCNN(nn.Module):
         nn.init.xavier_uniform_(self.conv2.weight)
         nn.init.xavier_uniform_(self.conv3.weight)
 
-    def load(self):
-        checkpoint = torch.load('trained_models/1000_FSRCNN_x2_netG.pth')
-        self.upscaleNet.load_state_dict(checkpoint['state_dict'])
+
 
 class FSRCNN(nn.Module):
     def __init__(self, upscale_factor):

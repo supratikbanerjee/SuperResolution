@@ -1,5 +1,5 @@
 #### general settings
-name: 0001_RDACN_EXP_01_FSRCNN
+name: 00001_LWSR
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -11,11 +11,11 @@ dataset:
   scale: 2
   train:
     name: DIV2K
-    data_location: data/datasets/BSDS300/train/
+    data_location: data/datasets/DIV2K/train/
     shuffle: true
-    n_workers: 0  # per GPU
+    n_workers: 1  # per GPU
     batch_size: 20
-    lr_size: 40
+    lr_size: 128
     repeat: 1
   test:
     name: Set5
@@ -27,18 +27,12 @@ dataset:
 
 #### network structures
 network_G:
-  model: RDCAN
-  num_features: 16
-  in_channels: 3
-  out_channels: 3
-  num_steps: 8 # later use
-  num_groups: 1
-  reduction: 4
+  model: LWSR
+  features: 16
 
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 100
-
+  epoch: 1000
   cl_train: false
   lr_G: !!float 1e-4
   weight_decay_G: 0
@@ -59,5 +53,5 @@ train:
 logger:
   print_freq: 6 # epoch
   path: experiments/
-  chkpt_freq: 2 # epoch
+  chkpt_freq: 10 # epoch
   

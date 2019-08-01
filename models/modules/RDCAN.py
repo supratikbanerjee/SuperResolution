@@ -11,16 +11,19 @@ class CALayer(nn.Module):
         # global average pooling: feature --> point
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         # feature channel downscale and upscale --> channel weight
-        self.conv_du = nn.Sequential(
-                nn.Conv2d(channel, channel // reduction, 1, padding=0, bias=True),
-                nn.ReLU(inplace=True),
-                nn.Conv2d(channel // reduction, channel, 1, padding=0, bias=True),
-                nn.Sigmoid()
-        )
+        self.conv_down = pac.PacConv2d(channel, channel // reduction, 1, padding=0, bias=True)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv_up = pac.PacConv2d(channel // reduction, channel, 1, padding=0, bias=True)
+        self.sig = nn.Sigmoid()
+        
 
     def forward(self, x):
+        #print(x.shape)
         y = self.avg_pool(x)
-        y = self.conv_du(y)
+        y = self.conv_down(y, y)
+        y = self.relu(y)
+        y = self.conv_up(y, y)
+        y = self.sig(y)
         return x * y
 
 
@@ -35,9 +38,9 @@ class UpBlock(nn.Module):
         self.act2 = nn.PReLU(num_parameters=1, init=0.2)
 
     def forward(self, x):
-        guide = x[1]
-        x = x[0]
-        x = self.act1(self.upCompressIn(x, guide))
+        #guide = x[1]
+        #x = x[0]
+        x = self.act1(self.upCompressIn(x, x))
         x = self.act2(self.upConv(x))
         return x
 
@@ -52,9 +55,9 @@ class DownBlock(nn.Module):
         self.act2 = nn.PReLU(num_parameters=1, init=0.2)
 
     def forward(self, x):
-        guide = x[1]
-        x = x[0]
-        x = self.act1(self.downCompressIn(x, guide))
+        #guide = x[1]
+        #x = x[0]
+        x = self.act1(self.downCompressIn(x, x))
         x = self.act2(self.downConv(x))
         return x
 
@@ -62,8 +65,8 @@ class DownBlock(nn.Module):
 class FeedbackBlock(nn.Module):
     def __init__(self, num_features, num_groups, upscale_factor, stride, kernel_size, reduction=8):
         super(FeedbackBlock, self).__init__()
-        kernel_size = 6
-        padding = 2
+        kernel_size = 2
+        padding = 0
         self.num_groups = num_groups
 
         self.upBlocks = nn.ModuleList()
@@ -80,32 +83,32 @@ class FeedbackBlock(nn.Module):
         self.CALayer = CALayer(num_features, reduction)
 
     def forward(self, x):
-        guide_h = x[2]
-        guide = x[1]
-        x = x[0]
+        #guide_h = x[2]
+        #guide = x[1]
+        #x = x[0]
         lr_features = []
 
         LD_L = torch.tensor([]).cuda()
         LD_H = torch.tensor([]).cuda()
         LD_L = torch.cat((LD_L, x), 1)
-        prev_LD = x
+        #prev_LD = x
 
         for idx in range(self.num_groups):
-            LD_H_o = self.upBlocks[idx]((LD_L, guide))
+            LD_H_o = self.upBlocks[idx](LD_L)
             LD_H = torch.cat((LD_H, LD_H_o), 1)
 
-            LD_L_o = self.downBlocks[idx]((LD_H, guide_h))
+            LD_L_o = self.downBlocks[idx](LD_H)
             LD_L = torch.cat((LD_L, LD_L_o), 1)
 
-            lr_features.append(LD_L_o + prev_LD)
-            prev_LD = LD_L_o
+            lr_features.append(LD_L_o)
+            #prev_LD = LD_L_o
 
         output = torch.cat(tuple(lr_features), 1)
         output = self.compress_out(output)
         output = self.prelu2(output)
         output = self.CALayer(output)
 
-        res = output + x
+        #res = output + x
 
         return output
 
@@ -132,8 +135,8 @@ class RDCAN(nn.Module):
         self.num_features = num_features
         self.upscale_factor = upscale_factor
 
-        self.upscaleNet = FSRCNN(upscale_factor)
-        self.load()
+        #self.upscaleNet = FSRCNN(upscale_factor)
+        #self.load()
         
         
         # LR feature extraction block
@@ -167,14 +170,14 @@ class RDCAN(nn.Module):
 
     def forward(self, x):
 
-        guide = x
-        guide_h = self.upscaleNet(x)
+        #guide = x
+        #guide_h = self.upscaleNet(x)
         inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
 
         x = self.prelu1(self.conv_in(x))
-        x = self.prelu2(self.feat_in(x, guide))        
+        x = self.prelu2(self.feat_in(x, x))        
 
-        h = self.block((x, guide, guide_h))
+        h = self.block(x)
         
         h = self.prelu3(self.out(h))
         h = self.prelu4(self.conv_out(h))
@@ -182,7 +185,7 @@ class RDCAN(nn.Module):
         return h
 
 
-    def load(self):
-        checkpoint = torch.load('trained_models/1000_FSRCNN_x2_netG.pth')
-        self.upscaleNet.load_state_dict(checkpoint['state_dict'])
+    #def load(self):
+    #    checkpoint = torch.load('trained_models/1000_FSRCNN_x2_netG.pth')
+    #    self.upscaleNet.load_state_dict(checkpoint['state_dict'])
  

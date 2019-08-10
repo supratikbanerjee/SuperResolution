@@ -1,5 +1,5 @@
 #### general settings
-name: RDACN_TEST_EXP_04
+name: 0001_PASR_EXP_01
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -15,7 +15,7 @@ dataset:
     shuffle: true
     n_workers: 0  # per GPU
     batch_size: 16
-    lr_size: 40
+    lr_size: 128
     repeat: 2
   test:
     name: Set5

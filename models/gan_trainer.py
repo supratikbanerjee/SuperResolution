@@ -173,8 +173,9 @@ class GAN():
 			infer_time = time.time() - infer_time_start
 			if isinstance(self.hr_fake, list):
 				self.hr_fake = self.hr_fake[-1]
-		valid_loss = self.pixel_weight * self.pixel_criterion(self.hr_fake, self.hr_real)
-		self.logs['v_l'] = valid_loss.item()
+		if self.config['is_train']:
+			valid_loss = self.pixel_weight * self.pixel_criterion(self.hr_fake, self.hr_real)
+			self.logs['v_l'] = valid_loss.item()
 
 		return infer_time
 

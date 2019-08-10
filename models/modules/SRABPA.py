@@ -10,18 +10,18 @@ class CALayer(nn.Module):
         # global average pooling: feature --> point
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         # feature channel downscale and upscale --> channel weight
-        self.conv_down = pac.PacConv2d(channel, channel // reduction, 1, padding=0, bias=True)
+        self.conv_down = ConvBlock(channel, channel // reduction, 1, padding=0, bias=True)
         self.relu = nn.PReLU(num_parameters=1, init=0.2)
-        self.conv_up = pac.PacConv2d(channel // reduction, channel, 1, padding=0, bias=True)
+        self.conv_up = ConvBlock(channel // reduction, channel, 1, padding=0, bias=True)
         self.sig = nn.Sigmoid()
         
 
     def forward(self, x):
         #print(x.shape)
         y = self.avg_pool(x)
-        y = self.conv_down(y, y)
+        y = self.conv_down(y)
         y = self.relu(y)
-        y = self.conv_up(y, y)
+        y = self.conv_up(y)
         y = self.sig(y)
         return x * y
 
@@ -72,6 +72,8 @@ class FeedbackBlock(nn.Module):
                                                      kernel_size=1, stride=1,
                                                      act_type=act_type, norm_type=norm_type))
 
+        #self.ca = CALayer(num_features)
+
         self.compress_out = ConvBlock(num_groups*num_features, num_features,
                                       kernel_size=1,
                                       act_type=act_type, norm_type=norm_type)
@@ -104,6 +106,7 @@ class FeedbackBlock(nn.Module):
             if idx > 0:
                 LD_H = self.downtranBlocks[idx-1](LD_H)
             LD_L = self.downBlocks[idx](LD_H)
+            #LD_L = self.ca(LD_L)
 
             lr_features.append(LD_L)
 
@@ -154,7 +157,7 @@ class SRABPA(nn.Module):
                                  act_type=act_type, norm_type=norm_type)
         self.feat_in = ConvBlock(4*num_features, num_features,
                                  kernel_size=1,
-                                 act_type=act_type, norm_type=norm_type)
+                                 act_type=act_type, norm_type=norm_type, pa=True)
 
         # basic block
         self.block = FeedbackBlock(num_features, num_groups, upscale_factor, act_type, norm_type)
@@ -184,7 +187,7 @@ class SRABPA(nn.Module):
         inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
 
         x = self.conv_in(x)
-        x = self.feat_in(x)
+        x = self.feat_in(x, x)
 
         h = self.block(x)
 

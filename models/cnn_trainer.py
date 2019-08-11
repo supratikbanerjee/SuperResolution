@@ -17,6 +17,7 @@ class CNN():
 
 		# define model
 		self.netG = networks.define_G(self.config).to(self.device)
+		print(self.netG)
 
 		if self.config['is_train']:
 			self.train_config = self.config['train']

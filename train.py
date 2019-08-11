@@ -112,7 +112,8 @@ def main(config):
 				img_name = img_name[:img_name.index('.')]
 				img_dir = experiment_dir+'/val_image/'+img_name
 				util.mkdir(img_dir)
-				trainer.test(batch)
+				inf_time = trainer.test(batch)
+				print(inf_time)
 				visuals = trainer.get_current_visuals()
 				sr_img = util.tensor2img(visuals['SR'])  # uint8
 				gt_img = util.tensor2img(visuals['HR'])  # uint8

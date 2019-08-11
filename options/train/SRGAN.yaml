@@ -1,7 +1,7 @@
 #### general settings
 name: SRGAN_Test_Exp_01
 is_train: true
-use_visdom: false
+use_visdom: true
 visdom_port: 8086
 model: gan
 device: cuda
@@ -27,12 +27,12 @@ dataset:
 
 #### network structures
 network_G:
-  model: MSRResNet
-  in_nc: 3
-  out_nc: 3
-  nf: 64
-  nb: 16
-  upscale: 2
+  model: SRABPA
+  num_features: 16
+  in_channels: 3
+  out_channels: 3
+  num_steps: 1
+  num_groups: 1
 network_D:
   model: discriminator_vgg_128
   in_nc: 3

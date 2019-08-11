@@ -5,7 +5,7 @@ from models import pac
 
 
 class CALayer(nn.Module):
-    def __init__(self, channel, reduction=8):
+    def __init__(self, channel, reduction=4):
         super(CALayer, self).__init__()
         # global average pooling: feature --> point
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
@@ -72,8 +72,6 @@ class FeedbackBlock(nn.Module):
                                                      kernel_size=1, stride=1,
                                                      act_type=act_type, norm_type=norm_type))
 
-        #self.ca = CALayer(num_features)
-
         self.compress_out = ConvBlock(num_groups*num_features, num_features,
                                       kernel_size=1,
                                       act_type=act_type, norm_type=norm_type)
@@ -118,9 +116,9 @@ class FeedbackBlock(nn.Module):
 
 
 
-class SRABPA(nn.Module):
+class PASR(nn.Module):
     def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, act_type = 'prelu', norm_type = None):
-        super(SRABPA, self).__init__()
+        super(PASR, self).__init__()
 
         if upscale_factor == 2:
             stride = 2
@@ -143,10 +141,6 @@ class SRABPA(nn.Module):
         self.num_features = num_features
         self.upscale_factor = upscale_factor
 
-        # RGB mean for DIV2K
-        rgb_mean = (0.4488, 0.4371, 0.4040)
-        rgb_std = (1.0, 1.0, 1.0)
-        #self.sub_mean = MeanShift(rgb_mean, rgb_std)
 
         # LR feature extraction block
         self.conv_in = ConvBlock(in_channels, 4*num_features,
@@ -154,7 +148,7 @@ class SRABPA(nn.Module):
                                  act_type=act_type, norm_type=norm_type)
         self.feat_in = ConvBlock(4*num_features, num_features,
                                  kernel_size=1,
-                                 act_type=act_type, norm_type=norm_type, pa=False)
+                                 act_type=act_type, norm_type=norm_type, pa=True)
 
         # basic block
         self.block = FeedbackBlock(num_features, num_groups, upscale_factor, act_type, norm_type)
@@ -163,15 +157,15 @@ class SRABPA(nn.Module):
         # uncomment for pytorch 0.4.0
         # self.upsample = nn.Upsample(scale_factor=upscale_factor, mode='bilinear')
 
-        #self.out = DeconvBlock(num_features, num_features,
-        #                       kernel_size=kernel_size, stride=stride, padding=padding,
-        #                       act_type='prelu', norm_type=norm_type)
+        self.out = DeconvBlock(num_features, num_features,
+                               kernel_size=kernel_size, stride=stride, padding=padding,
+                               act_type='prelu', norm_type=norm_type)
         self.prelu = nn.PReLU(num_parameters=1, init=0.2)
-        self.conv4 = nn.Conv2d(num_features, num_features * (upscale_factor ** 2), kernel_size=3, stride=1, padding=1)
-        self.pixel_shuffle = nn.PixelShuffle(upscale_factor)
+        #self.ca = CALayer(num_features)
         self.conv_out = ConvBlock(num_features, out_channels,
                                   kernel_size=3,
                                   act_type=None, norm_type=norm_type)
+
 
         
         #self.add_mean = MeanShift(rgb_mean, rgb_std, 1)
@@ -186,13 +180,10 @@ class SRABPA(nn.Module):
         inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
 
         x = self.conv_in(x)
-        x = self.feat_in(x)
+        x = self.feat_in(x, x)
 
         h = self.block(x)
-        #h = self.out(h)
-        h = self.pixel_shuffle(self.conv4(h))
-        h = self.prelu(h)
 
-        h = torch.add(inter_res, self.conv_out(h))
+        h = torch.add(inter_res, self.conv_out(self.prelu(self.out(h))))
         #h = self.add_mean(h)
         return h

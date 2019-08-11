@@ -81,7 +81,7 @@ def ConvBlock(in_channels, out_channels, kernel_size, stride=1, dilation=1, bias
     if mode == 'CNA':
         act = activation(act_type) if act_type else None
         n = norm(out_channels, norm_type) if norm_type else None
-        return sequential(conv)
+        return conv
     elif mode == 'NAC':
         act = activation(act_type, inplace=False) if act_type else None
         n = norm(in_channels, norm_type) if norm_type else None
@@ -337,7 +337,7 @@ def DeconvBlock(in_channels, out_channels, kernel_size, stride=1, dilation=1, bi
     if mode == 'CNA':
         act = activation(act_type) if act_type else None
         n = norm(out_channels, norm_type) if norm_type else None
-        return sequential(p, deconv, n, act)
+        return deconv
     elif mode == 'NAC':
         act = activation(act_type, inplace=False) if act_type else None
         n = norm(in_channels, norm_type) if norm_type else None

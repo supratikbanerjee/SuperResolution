@@ -27,7 +27,7 @@ dataset:
 
 #### network structures
 network_G:
-  model: SRABPA
+  model: PASR
   num_features: 16
   in_channels: 3
   out_channels: 3

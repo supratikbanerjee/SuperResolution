@@ -105,7 +105,7 @@ class GAN():
 			if self.train_config['gan_type'] == 'gan':
 				adversarial_loss_g = self.adversarial_weight * self.adversarial_criterion(proba, self.get_target(proba, True))
 			elif self.train_config['gan_type'] == 'ragan':
-				proba_r = self.netD(self.hr_fake)
+				proba_r = self.netD(self.hr_real)
 				adversarial_loss_g = self.adversarial_weight * (
 					self.adversarial_criterion(proba_r - torch.mean(proba), self.get_target(proba_r, False)) +
 					self.adversarial_criterion(proba - torch.mean(proba_r), self.get_target(proba, True))) / 2

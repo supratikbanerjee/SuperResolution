@@ -323,9 +323,11 @@ def UpsampleConvBlock(upscale_factor, in_channels, out_channels, kernel_size, st
     return sequential(upsample, conv)
 
 
-def PixelShuffleBlock():
-    pass
-
+def PixelShuffleBlock(num_features, upscale_factor):
+    #conv = pac.PacConv2d(num_features, num_features * (upscale_factor ** 2), kernel_size=3, stride=1, padding=1)
+    #conv1 = nn.Conv2d(num_features * (upscale_factor ** 2), num_features * (upscale_factor ** 2), kernel_size=1, stride=1, padding=0)
+    pixel_shuffle = nn.PixelShuffle(upscale_factor)
+    return sequential(pixel_shuffle)
 
 def DeconvBlock(in_channels, out_channels, kernel_size, stride=1, dilation=1, bias=True, padding=0, \
                 act_type='relu', norm_type='bn', pad_type='zero', mode='CNA'):

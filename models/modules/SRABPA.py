@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from .blocks import ConvBlock, DeconvBlock, MeanShift
+from .blocks import ConvBlock, DeconvBlock, PixelShuffleBlock
 from models import pac
 
 
@@ -31,8 +31,8 @@ class FeedbackBlock(nn.Module):
         super(FeedbackBlock, self).__init__()
         if upscale_factor == 2:
             stride = 2
-            padding = 0
-            kernel_size = 2
+            padding = 1
+            kernel_size = 3
         elif upscale_factor == 3:
             stride = 3
             padding = 2
@@ -48,19 +48,23 @@ class FeedbackBlock(nn.Module):
 
         self.num_groups = num_groups
 
-        self.compress_in = ConvBlock(num_features, num_features,
-                                     kernel_size=1,
-                                     act_type=act_type, norm_type=norm_type)
+        #self.compress_in = ConvBlock(num_features, num_features,
+        #                             kernel_size=1,
+        #                             act_type=act_type, norm_type=norm_type)
 
         self.upBlocks = nn.ModuleList()
+        self.upPac = nn.ModuleList()
         self.downBlocks = nn.ModuleList()
         self.uptranBlocks = nn.ModuleList()
         self.downtranBlocks = nn.ModuleList()
 
         for idx in range(self.num_groups):
-            self.upBlocks.append(DeconvBlock(num_features, num_features,
-                                             kernel_size=kernel_size, stride=stride, padding=padding,
-                                             act_type=act_type, norm_type=norm_type))
+            #self.upBlocks.append(DeconvBlock(num_features, num_features,
+            #                                 kernel_size=kernel_size, stride=stride, padding=padding,
+            #                                 act_type=act_type, norm_type=norm_type))
+            self.upPac.append(ConvBlock(num_features, num_features * (upscale_factor ** 2),
+                                             kernel_size=3, stride=1, padding=1,valid_padding=False, pa=True))
+            self.upBlocks.append(nn.PixelShuffle(upscale_factor))
             self.downBlocks.append(ConvBlock(num_features, num_features,
                                              kernel_size=kernel_size, stride=stride, padding=padding,
                                              act_type=act_type, norm_type=norm_type, valid_padding=False))
@@ -86,7 +90,7 @@ class FeedbackBlock(nn.Module):
 
 
         # x = torch.cat((x, self.last_hidden), dim=1)
-        x = self.compress_in(x)
+        #x = self.compress_in(x)
 
         lr_features = []
         hr_features = []
@@ -96,6 +100,7 @@ class FeedbackBlock(nn.Module):
             LD_L = torch.cat(tuple(lr_features), 1)    # when idx == 0, lr_features == [x]
             if idx > 0:
                 LD_L = self.uptranBlocks[idx-1](LD_L)
+            LD_L = self.upPac[idx](LD_L, LD_L)
             LD_H = self.prelu(self.upBlocks[idx](LD_L))
 
             hr_features.append(LD_H)
@@ -154,7 +159,7 @@ class SRABPA(nn.Module):
                                  act_type=act_type, norm_type=norm_type)
         self.feat_in = ConvBlock(4*num_features, num_features,
                                  kernel_size=1,
-                                 act_type=act_type, norm_type=norm_type, pa=False)
+                                 act_type=act_type, norm_type=norm_type)
 
         # basic block
         self.block = FeedbackBlock(num_features, num_groups, upscale_factor, act_type, norm_type)

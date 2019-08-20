@@ -1,5 +1,5 @@
 #### general settings
-name: 1_FSRCNN_FOR_PRETRAIN
+name: 1_SRResNet_FOR_PRETRAIN
 is_train: true
 use_visdom: true
 visdom_port: 8067
@@ -14,8 +14,8 @@ dataset:
     data_location: data/datasets/DIV2K/train/
     shuffle: true
     n_workers: 1  # per GPU
-    batch_size: 20
-    lr_size: 256
+    batch_size: 8
+    lr_size: 128
     repeat: 1
   test:
     name: Set5
@@ -27,7 +27,8 @@ dataset:
 
 #### network structures
 network_G:
-  model: FSRCNN
+  model: SRResNet
+  layers: 16
 
 #### training settings: learning rate scheme, loss
 train:
@@ -46,11 +47,11 @@ train:
   pixel_weight: !!float 1e0
 
   manual_seed: 10
-  val_freq: 6 # epoch
+  val_freq: 5 # epoch
 
 #### logger
 logger:
-  print_freq: 5 # epoch
+  print_freq: 6 # epoch
   path: experiments/
-  chkpt_freq: 2 # epoch
+  chkpt_freq: 10 # epoch
   

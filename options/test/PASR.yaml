@@ -1,4 +1,4 @@
-name: PASR_01
+name: PASR_01_BSD
 is_train: false
 model: cnn
 device: cuda
@@ -7,7 +7,7 @@ dataset:
   scale: 2
   test_1:
     name: Set5
-    data_location: data/datasets/Render4K/test/
+    data_location: data/datasets/BSDS300/test/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1
@@ -15,7 +15,7 @@ dataset:
 
 #### network structures
 network_G:
-  model: PASR
+  model: SRABPA
   num_features: 16
   in_channels: 3
   out_channels: 3
@@ -25,4 +25,4 @@ network_G:
 #### path
 path:
   experiments: trained_models/experiments/
-  pretrain_model_G: trained_models/1000_PASR_x2_netG.pth
+  pretrain_model_G: trained_models/1000_SRABPA_x2_netG.pth

@@ -59,6 +59,7 @@ class GAN():
 				self.scheduler_D = torch.optim.lr_scheduler.MultiStepLR(self.optimizer_D, 
 					self.train_config['lr_step'], 
 					self.train_config['lr_gamma'])
+			self.load()
 		else:
 			self.load()
 

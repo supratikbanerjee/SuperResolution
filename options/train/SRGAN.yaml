@@ -1,8 +1,8 @@
 #### general settings
-name: SRGAN_Test_Exp_01
+name: _0001_SRGAN_DIV2K
 is_train: true
 use_visdom: true
-visdom_port: 8086
+visdom_port: 8067
 model: gan
 device: cuda
 
@@ -13,9 +13,9 @@ dataset:
     name: DIV2K
     data_location: data/datasets/DIV2K/train/
     shuffle: true
-    n_workers: 6  # per GPU
+    n_workers: 1  # per GPU
     batch_size: 32
-    lr_size: 128
+    lr_size: 64
     repeat: 1
   test:
     name: Set5
@@ -27,16 +27,10 @@ dataset:
 
 #### network structures
 network_G:
-  model: SRABPA
-  num_features: 16
-  in_channels: 3
-  out_channels: 3
-  num_steps: 1
-  num_groups: 1
+  model: SRResNet
+  layers: 16
 network_D:
-  model: discriminator_vgg_128
-  in_nc: 3
-  nf: 64
+  model: LeakyVGG
 #### training settings: learning rate scheme, loss
 train:
   epoch: 1000
@@ -51,27 +45,30 @@ train:
   beta1_D: 0.9
   beta2_D: 0.99
 
-  lr_step: 10
+  lr_scheme: MultiStepLR
+  lr_step: [200, 400, 600, 800]
   lr_gamma: 0.5
 
-  pixel_criterion: l1
-  pixel_weight: !!float 1e-2
-  feature_criterion: l1
-  feature_weight: 1
+  pixel_criterion: l2
+  pixel_weight: !!float 1
+  feature_criterion: l2
+  feature_weight: !!float 6e-3
   adversarial_criterion: BCEL
   gan_type: gan  # gan | ragan
-  gan_weight: !!float 5e-3
+  gan_weight: !!float 1e-3
   feature_extractor: vgg19
 
-  real_weightD: 1
-  fake_weightD: 1
+  real_weightD: 0.5
+  fake_weightD: 0.5
 
   manual_seed: 10
-  val_freq: 1 # epoch
+  val_freq: 5 # epoch
 
 #### logger
 logger:
-  print_freq: 5 # epoch
+  print_freq: 6 # epoch
   path: experiments/
-  chkpt_freq: 10 # epoch
+  chkpt_freq: 2 # epoch
   
+path:
+  pretrain_model_G: trained_models/1000_SRResNet_x2_netG.pth

@@ -4,7 +4,7 @@ from tqdm import tqdm
 import numpy as np
 import random
 import os
-import scipy.misc as misc
+from PIL import Image
 from torchvision.transforms import Compose, CenterCrop, ToTensor
 
 IMG_EXTENSIONS = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP']
@@ -47,7 +47,7 @@ class Dataset(data.Dataset):
 		with tqdm(total=len(self.PATH), desc=self.config[self.phase]['name'], miniters=1) as t:
 			for i, path in enumerate(self.PATH):
 				img = load_image(path)
-				LR = misc.imresize(img, (int(img.shape[0]/self.upscale_factor),int(img.shape[1]/self.upscale_factor)), interp='bilinear')
+				LR = img.resize((int(img.size[0]/self.upscale_factor), int(img.size[1]/self.upscale_factor)), Image.BICUBIC)
 				self.LR.append(LR)
 				self.HR.append(img)
 				t.set_postfix_str("Batches: [%d/%d]" % ((i+1)//batch_size, len(self.PATH)/batch_size))				
@@ -57,22 +57,22 @@ class Dataset(data.Dataset):
 		return len(self.PATH) * self.repeat
 
 def get_patch(img_in, img_tar, patch_size, scale):
-    ih, iw = img_in.shape[:2]
-    oh, ow = img_tar.shape[:2]
+    ih, iw = img_in.size[:2]
+    oh, ow = img_tar.size[:2]
     ip = patch_size
     tp = ip * scale
     ix = random.randrange(0, iw - ip + 1)
     iy = random.randrange(0, ih - ip + 1)
     tx, ty = scale * ix, scale * iy
-    img_in = img_in[iy:iy + ip, ix:ix + ip, :]
-    img_tar = img_tar[ty:ty + tp, tx:tx + tp, :]
+    img_in = img_in.crop((iy,ix,iy + ip, ix + ip))
+    img_tar = img_tar.crop((ty,tx,ty + tp, tx + tp))
     return img_in, img_tar
 
 def is_image(filename):
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
 def load_image(path):
-	img = misc.imread(path, mode='RGB')
+	img = Image.open(path).convert('RGB')
 	return img
 
 def get_train_set(config):

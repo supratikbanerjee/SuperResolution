@@ -1,11 +1,10 @@
 import torch
 import torch.nn as nn
-from .blocks import ConvBlock, DeconvBlock, MeanShift
-from models import pac
+from .blocks import ConvBlock, DeconvBlock
 
 
 class CALayer(nn.Module):
-    def __init__(self, channel, reduction=4):
+    def __init__(self, channel, reduction=8):
         super(CALayer, self).__init__()
         # global average pooling: feature --> point
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
@@ -31,8 +30,8 @@ class FeedbackBlock(nn.Module):
         super(FeedbackBlock, self).__init__()
         if upscale_factor == 2:
             stride = 2
-            padding = 0
-            kernel_size = 2
+            padding = 1
+            kernel_size = 3
         elif upscale_factor == 3:
             stride = 3
             padding = 2
@@ -48,19 +47,23 @@ class FeedbackBlock(nn.Module):
 
         self.num_groups = num_groups
 
-        self.compress_in = ConvBlock(num_features, num_features,
-                                     kernel_size=1,
-                                     act_type=act_type, norm_type=norm_type)
+        #self.compress_in = ConvBlock(num_features, num_features,
+        #                             kernel_size=1,
+        #                             act_type=act_type, norm_type=norm_type)
 
         self.upBlocks = nn.ModuleList()
+        self.upPac = nn.ModuleList()
         self.downBlocks = nn.ModuleList()
         self.uptranBlocks = nn.ModuleList()
         self.downtranBlocks = nn.ModuleList()
 
         for idx in range(self.num_groups):
-            self.upBlocks.append(DeconvBlock(num_features, num_features,
-                                             kernel_size=kernel_size, stride=stride, padding=padding,
-                                             act_type=act_type, norm_type=norm_type))
+            #self.upBlocks.append(DeconvBlock(num_features, num_features,
+            #                                 kernel_size=kernel_size, stride=stride, padding=padding,
+            #                                 act_type=act_type, norm_type=norm_type))
+            self.upPac.append(ConvBlock(num_features, num_features * (upscale_factor ** 2),
+                                             kernel_size=3, stride=1, padding=1,valid_padding=False, pa=False))
+            self.upBlocks.append(nn.PixelShuffle(upscale_factor))
             self.downBlocks.append(ConvBlock(num_features, num_features,
                                              kernel_size=kernel_size, stride=stride, padding=padding,
                                              act_type=act_type, norm_type=norm_type, valid_padding=False))
@@ -72,6 +75,8 @@ class FeedbackBlock(nn.Module):
                                                      kernel_size=1, stride=1,
                                                      act_type=act_type, norm_type=norm_type))
 
+        #self.ca = CALayer(num_features)
+
         self.compress_out = ConvBlock(num_groups*num_features, num_features,
                                       kernel_size=1,
                                       act_type=act_type, norm_type=norm_type)
@@ -81,10 +86,8 @@ class FeedbackBlock(nn.Module):
 
 
     def forward(self, x):
-
-
         # x = torch.cat((x, self.last_hidden), dim=1)
-        x = self.compress_in(x)
+        #x = self.compress_in(x)
 
         lr_features = []
         hr_features = []
@@ -94,6 +97,7 @@ class FeedbackBlock(nn.Module):
             LD_L = torch.cat(tuple(lr_features), 1)    # when idx == 0, lr_features == [x]
             if idx > 0:
                 LD_L = self.uptranBlocks[idx-1](LD_L)
+            LD_L = self.upPac[idx](LD_L)
             LD_H = self.prelu(self.upBlocks[idx](LD_L))
 
             hr_features.append(LD_H)
@@ -116,9 +120,9 @@ class FeedbackBlock(nn.Module):
 
 
 
-class PASR(nn.Module):
+class SPBP(nn.Module):
     def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, act_type = 'prelu', norm_type = None):
-        super(PASR, self).__init__()
+        super(SPBP, self).__init__()
 
         if upscale_factor == 2:
             stride = 2
@@ -141,6 +145,10 @@ class PASR(nn.Module):
         self.num_features = num_features
         self.upscale_factor = upscale_factor
 
+        # RGB mean for DIV2K
+        rgb_mean = (0.4488, 0.4371, 0.4040)
+        rgb_std = (1.0, 1.0, 1.0)
+        #self.sub_mean = MeanShift(rgb_mean, rgb_std)
 
         # LR feature extraction block
         self.conv_in = ConvBlock(in_channels, 4*num_features,
@@ -148,7 +156,7 @@ class PASR(nn.Module):
                                  act_type=act_type, norm_type=norm_type)
         self.feat_in = ConvBlock(4*num_features, num_features,
                                  kernel_size=1,
-                                 act_type=act_type, norm_type=norm_type, pa=True)
+                                 act_type=act_type, norm_type=norm_type)
 
         # basic block
         self.block = FeedbackBlock(num_features, num_groups, upscale_factor, act_type, norm_type)
@@ -157,15 +165,15 @@ class PASR(nn.Module):
         # uncomment for pytorch 0.4.0
         # self.upsample = nn.Upsample(scale_factor=upscale_factor, mode='bilinear')
 
-        self.out = DeconvBlock(num_features, num_features,
-                               kernel_size=kernel_size, stride=stride, padding=padding,
-                               act_type='prelu', norm_type=norm_type)
+        #self.out = DeconvBlock(num_features, num_features,
+        #                       kernel_size=kernel_size, stride=stride, padding=padding,
+        #                       act_type='prelu', norm_type=norm_type)
         self.prelu = nn.PReLU(num_parameters=1, init=0.2)
-        #self.ca = CALayer(num_features)
+        self.conv4 = nn.Conv2d(num_features, num_features * (upscale_factor ** 2), kernel_size=3, stride=1, padding=1)
+        self.pixel_shuffle = nn.PixelShuffle(upscale_factor)
         self.conv_out = ConvBlock(num_features, out_channels,
                                   kernel_size=3,
                                   act_type=None, norm_type=norm_type)
-
 
         
         #self.add_mean = MeanShift(rgb_mean, rgb_std, 1)
@@ -180,10 +188,13 @@ class PASR(nn.Module):
         inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
 
         x = self.conv_in(x)
-        x = self.feat_in(x, x)
+        x = self.feat_in(x)
 
         h = self.block(x)
+        #h = self.out(h)
+        h = self.pixel_shuffle(self.conv4(h))
+        h = self.prelu(h)
 
-        h = torch.add(inter_res, self.conv_out(self.prelu(self.out(h))))
+        h = torch.add(inter_res, self.conv_out(h))
         #h = self.add_mean(h)
         return h

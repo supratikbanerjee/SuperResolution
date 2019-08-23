@@ -58,7 +58,7 @@ def main(config):
 			util.save_img(lr_img, save_lr_img_path)
 			util.save_img(sr_img, save_sr_img_path)
 			crop_size = config['dataset']['scale']
-			psnr, ssim = util.calc_metrics(sr_img, gt_img, crop_size)
+			psnr, ssim = util.eval_psnr_and_ssim(sr_img, gt_img, crop_size)
 			logger.log('[ Image: {:s}  PSNR: {:.4f} SSIM: {:.4f} Inference Time: {:.8f}]'.format(img_name, psnr, ssim, infer_time))
 			avg_psnr += psnr
 			avg_ssim += ssim

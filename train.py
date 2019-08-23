@@ -121,7 +121,7 @@ def main(config):
 
 				util.save_img(sr_img, save_img_path)
 				crop_size = config['dataset']['scale']
-				psnr, ssim = util.calc_metrics(sr_img, gt_img, crop_size) 
+				psnr, ssim = util.eval_psnr_and_ssim(sr_img, gt_img, crop_size) 
 				avg_psnr += psnr
 				avg_ssim += ssim
 			avg_psnr = avg_psnr / idx

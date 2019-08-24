@@ -1,7 +1,7 @@
 #### general settings
-name: 0001_SPBP_EXP_01
+name: 0002_SPBP_Small_64pix
 is_train: true
-use_visdom: true
+use_visdom: false
 visdom_port: 8067
 model: cnn
 device: cuda
@@ -28,11 +28,11 @@ dataset:
 #### network structures
 network_G:
   model: SPBP
-  num_features: 64
+  num_features: 16
   in_channels: 3
   out_channels: 3
   num_steps: 1
-  num_groups: 10
+  num_groups: 1
 
 #### training settings: learning rate scheme, loss
 train:

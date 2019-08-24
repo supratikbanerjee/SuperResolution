@@ -78,6 +78,10 @@ def define_D(config):
 		netD = SRGAN_arch.DSwishVGG()
 	elif model == 'discriminator_vgg_128':
 		netD = SRGAN_arch.Discriminator_VGG_128(in_nc=net_config['in_nc'], nf=net_config['nf'])
+	elif model == 'FDLeakyVGG':
+		netD = SRGAN_arch.FDLeakyVGG()
+	elif model == 'fdiscriminator_vgg_128':
+		netD = SRGAN_arch.FDiscriminator_VGG_128(in_nc=256, nf=64)
 	elif model == 'CapsNet':
 		netD = CapsuleNetwork(image_width=net_config['size'],
                          image_height=net_config['size'],

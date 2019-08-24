@@ -1,7 +1,7 @@
 #### general settings
-name: SRGAN_Test_Exp_01
+name: _0001_SPBPGAN_smallG
 is_train: true
-use_visdom: true
+use_visdom: false
 visdom_port: 8067
 model: gan
 device: cuda
@@ -14,8 +14,8 @@ dataset:
     data_location: data/datasets/DIV2K/train/
     shuffle: true
     n_workers: 1  # per GPU
-    batch_size: 50
-    lr_size: 40
+    batch_size: 32
+    lr_size: 64
     repeat: 2
   test:
     name: Set5
@@ -27,7 +27,7 @@ dataset:
 
 #### network structures
 network_G:
-  model: SRABPA
+  model: SPBP
   num_features: 16
   in_channels: 3
   out_channels: 3
@@ -38,6 +38,7 @@ network_D:
   model: discriminator_vgg_128
   in_nc: 3
   nf: 64
+
 #### training settings: learning rate scheme, loss
 train:
   epoch: 1000
@@ -65,8 +66,8 @@ train:
   gan_weight: !!float 5e-3
   feature_extractor: vgg19
 
-  real_weightD: 0.5
-  fake_weightD: 0.5
+  real_weightD: 1
+  fake_weightD: 1
 
   manual_seed: 10
   val_freq: 5 # epoch
@@ -76,3 +77,6 @@ logger:
   print_freq: 6 # epoch
   path: experiments/
   chkpt_freq: 2 # epoch
+
+path:
+  pretrain_model_G: trained_models/1000_SPBP_x2_netG.pth

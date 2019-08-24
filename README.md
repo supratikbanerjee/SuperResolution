@@ -1,6 +1,6 @@
 ﻿# SuperResolution-Base
  
- **SuperResolution-Base** is a Single Image Super-Resolution (SISR) framework derived from the Basic-SR framework for research in Super Resolution using modern Neural Network Architectures. It is currently under active development for the fullfilment of my MSc. thesis at Trinity College Dublin. Soon the repository will be updated with my results.
+ **SuperResolution-Base** is a Single Image Super-Resolution (SISR) framework inspired by the Basic-SR framework for research in Super Resolution using modern Neural Network Architectures. It is currently under active development for the fullfilment of my MSc. thesis at Trinity College Dublin. Soon the repository will be updated with my results.
  
 ### Dependencies
   * python 3.x

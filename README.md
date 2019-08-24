@@ -9,7 +9,6 @@
   * torch
   * torchvision
   * scikit-image
-  * opencv
   * pillow
   * pyyaml
   * visdom
@@ -27,7 +26,6 @@ conda install pytorch torchvision cudatoolkit=9.0 -c pytorch
 
 # Install image libraries
 conda install -c conda-forge scikit-image
-conda install -c conda-forge opencv
 
 # Install visdom
 conda install -c conda-forge visdom

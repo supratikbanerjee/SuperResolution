@@ -22,7 +22,7 @@
 conda create -n sr_env
 
 # Install torch
-conda install pytorch torchvision cudatoolkit=9.0 -c pytorch
+conda install pytorch torchvision cudatoolkit=9.2 -c pytorch -c defaults -c numba/label/dev
 
 # Install image libraries
 conda install -c conda-forge scikit-image

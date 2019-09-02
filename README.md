@@ -5,7 +5,7 @@
 ### Dependencies
   * python 3.x
   * pytorch 1.1.0
-  * cuda92
+  * cuda10
   * torch
   * torchvision
   * scikit-image
@@ -22,9 +22,9 @@
 conda create -n sr_env
 
 # Install torch
-conda install pytorch torchvision cudatoolkit=9.2 -c pytorch -c defaults -c numba/label/dev
+conda install pytorch torchvision cudatoolkit=10.0 -c pytorch
 
-# Install image libraries
+# Install skimage
 conda install -c conda-forge scikit-image
 
 # Install visdom

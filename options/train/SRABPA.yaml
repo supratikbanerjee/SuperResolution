@@ -1,5 +1,5 @@
 #### general settings
-name: 0002_SPBP_Small_64pix
+name: 0001_SPBP_Deep
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -19,7 +19,7 @@ dataset:
     repeat: 2
   test:
     name: Set5
-    data_location: data/datasets/Set5/test/
+    data_location: data/datasets/Set5/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1

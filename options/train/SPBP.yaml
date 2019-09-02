@@ -14,7 +14,7 @@ dataset:
     data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 0  # per GPU
-    batch_size: 32
+    batch_size: 20
     lr_size: 40
     repeat: 2
   test:
@@ -57,5 +57,5 @@ train:
 logger:
   print_freq: 6 # epoch
   path: experiments/
-  chkpt_freq: 2 # epoch
+  chkpt_freq: 10 # epoch
   

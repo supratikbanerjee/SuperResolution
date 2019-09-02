@@ -1,7 +1,7 @@
 #### general settings
 name: 1_RRDBNet_FOR_PRETRAIN
 is_train: true
-use_visdom: true
+use_visdom: false
 visdom_port: 8067
 model: cnn
 device: cuda
@@ -11,7 +11,7 @@ dataset:
   scale: 2
   train:
     name: DIV2K
-    data_location: data/datasets/DIV2K/train/
+    data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 1  # per GPU
     batch_size: 8
@@ -19,7 +19,7 @@ dataset:
     repeat: 2
   test:
     name: Set5
-    data_location: data/datasets/Set5/test/
+    data_location: data/datasets/Set5/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1

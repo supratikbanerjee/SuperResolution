@@ -11,7 +11,7 @@ dataset:
   scale: 2
   train:
     name: DIV2K
-    data_location: data/datasets/DIV2K/train/
+    data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 0  # per GPU
     batch_size: 16
@@ -19,7 +19,7 @@ dataset:
     repeat: 2
   test:
     name: Set5
-    data_location: data/datasets/Set5/test/
+    data_location: data/datasets/Set5/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1
@@ -55,7 +55,7 @@ train:
 
 #### logger
 logger:
-  print_freq: 5 # epoch
+  print_freq: 6 # epoch
   path: experiments/
-  chkpt_freq: 2 # epoch
+  chkpt_freq: 10 # epoch
   

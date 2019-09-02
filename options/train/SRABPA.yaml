@@ -11,11 +11,11 @@ dataset:
   scale: 2
   train:
     name: DIV2K
-    data_location: data/datasets/DIV2K/train/
+    data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 0  # per GPU
-    batch_size: 20
-    lr_size: 64
+    batch_size: 32
+    lr_size: 40
     repeat: 2
   test:
     name: Set5
@@ -28,11 +28,11 @@ dataset:
 #### network structures
 network_G:
   model: SPBP
-  num_features: 16
+  num_features: 64
   in_channels: 3
   out_channels: 3
   num_steps: 1
-  num_groups: 1
+  num_groups: 10
 
 #### training settings: learning rate scheme, loss
 train:

@@ -50,6 +50,10 @@ Evaluating the performance of networks on the following benchmark datasets:
 * [B100 - Martin et al. ICCV 2001](https://www2.eecs.berkeley.edu/Research/Projects/CS/vision/bsds/)
 * [Urban100 - Huang et al. CVPR 2015](https://sites.google.com/site/jbhuang0604/publications/struct_sr)
 
+Direct Download Links:
+[Train](data.vision.ee.ethz.ch/cvl/DIV2K/DIV2K_train_HR.zip)
+[Test](vllab.ucmerced.edu/wlai24/LapSRN/results/SR_testing_datasets.zip)
+
 ### Loading the dataset
 Coming Soon...
 

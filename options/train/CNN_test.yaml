@@ -5,7 +5,7 @@ save_valid_img: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda
+device: cuda:0
 
 #### datasets
 dataset:
@@ -37,7 +37,7 @@ network_G:
 
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 1000
+  epoch: 100
   cl_train: false
   lr_G: !!float 1e-4
   weight_decay_G: 0

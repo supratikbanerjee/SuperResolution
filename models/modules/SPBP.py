@@ -103,7 +103,7 @@ class SubPixelBackProjection(nn.Module):
 
         #self.last_hidden = output
 
-        return output
+        return output+x
 
 
 
@@ -137,6 +137,16 @@ class SPBP(nn.Module):
         self.conv_out = ConvBlock(num_features, out_channels,
                                   kernel_size=3,
                                   act_type=None, norm_type=norm_type)
+
+        print("===> Initializing weights")
+        for m in self.modules():
+            classname = m.__class__.__name__
+            if classname.find('Conv2d') != -1:
+                torch.nn.init.kaiming_normal_(m.weight, a=0, mode='fan_in')
+                m.weight.data *= 0.1 
+                if m.bias is not None:
+                    m.bias.data.zero_()
+        print("===> Weights Initialized")
 
         
     def forward(self, x):

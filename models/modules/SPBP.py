@@ -25,25 +25,12 @@ class CALayer(nn.Module):
         return x * y
 
 
-class FeedbackBlock(nn.Module):
+class SubPixelBackProjection(nn.Module):
     def __init__(self, num_features, num_groups, upscale_factor, act_type, norm_type):
-        super(FeedbackBlock, self).__init__()
-        if upscale_factor == 2:
-            stride = 2
-            padding = 1
-            kernel_size = 3
-        elif upscale_factor == 3:
-            stride = 3
-            padding = 2
-            kernel_size = 7
-        elif upscale_factor == 4:
-            stride = 4
-            padding = 2
-            kernel_size = 8
-        elif upscale_factor == 8:
-            stride = 8
-            padding = 2
-            kernel_size = 12
+        super(SubPixelBackProjection, self).__init__()
+        stride = 2
+        padding = 1
+        kernel_size = 3
 
         self.num_groups = num_groups
 
@@ -124,31 +111,9 @@ class SPBP(nn.Module):
     def __init__(self, in_channels, out_channels, num_features, num_steps, num_groups, upscale_factor, act_type = 'prelu', norm_type = None):
         super(SPBP, self).__init__()
 
-        if upscale_factor == 2:
-            stride = 2
-            padding = 2
-            kernel_size = 6
-        elif upscale_factor == 3:
-            stride = 3
-            padding = 2
-            kernel_size = 7
-        elif upscale_factor == 4:
-            stride = 4
-            padding = 2
-            kernel_size = 8
-        elif upscale_factor == 8:
-            stride = 8
-            padding = 2
-            kernel_size = 12
-
         self.num_steps = num_steps
         self.num_features = num_features
         self.upscale_factor = upscale_factor
-
-        # RGB mean for DIV2K
-        rgb_mean = (0.4488, 0.4371, 0.4040)
-        rgb_std = (1.0, 1.0, 1.0)
-        #self.sub_mean = MeanShift(rgb_mean, rgb_std)
 
         # LR feature extraction block
         self.conv_in = ConvBlock(in_channels, 4*num_features,
@@ -158,12 +123,10 @@ class SPBP(nn.Module):
                                  kernel_size=1,
                                  act_type=act_type, norm_type=norm_type)
 
-        # basic block
-        self.block = FeedbackBlock(num_features, num_groups, upscale_factor, act_type, norm_type)
+        # Non-Linear block
+        self.block = SubPixelBackProjection(num_features, num_groups, upscale_factor, act_type, norm_type)
 
         # reconstruction block
-        # uncomment for pytorch 0.4.0
-        # self.upsample = nn.Upsample(scale_factor=upscale_factor, mode='bilinear')
 
         #self.out = DeconvBlock(num_features, num_features,
         #                       kernel_size=kernel_size, stride=stride, padding=padding,
@@ -176,25 +139,16 @@ class SPBP(nn.Module):
                                   act_type=None, norm_type=norm_type)
 
         
-        #self.add_mean = MeanShift(rgb_mean, rgb_std, 1)
-
     def forward(self, x):
 
-        #x = self.sub_mean(x)
-        # uncomment for pytorch 0.4.0
-        # inter_res = self.upsample(x)
-        
-        # comment for pytorch 0.4.0
         inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
 
         x = self.conv_in(x)
         x = self.feat_in(x)
 
         h = self.block(x)
-        #h = self.out(h)
         h = self.pixel_shuffle(self.conv4(h))
         h = self.prelu(h)
 
         h = torch.add(inter_res, self.conv_out(h))
-        #h = self.add_mean(h)
         return h

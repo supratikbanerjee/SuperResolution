@@ -74,9 +74,11 @@ train:
 
 #### logger
 logger:
+logger:
   print_freq: 6 # epoch
+  chkpt_freq: 100 # epoch
+  img_freq: 100
   path: experiments/
-  chkpt_freq: 2 # epoch
 
 path:
   pretrain_model_G: trained_models/1000_SPBP_x2_netG.pth

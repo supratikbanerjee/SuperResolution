@@ -60,6 +60,7 @@ train:
 #### logger
 logger:
   print_freq: 6 # epoch
+  chkpt_freq: 100 # epoch
+  img_freq: 100
   path: experiments/
-  chkpt_freq: 10# epoch
   

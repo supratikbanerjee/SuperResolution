@@ -117,9 +117,9 @@ def main(config):
 				visuals = trainer.get_current_visuals()
 				sr_img = util.tensor2img(visuals['SR'])  # uint8
 				gt_img = util.tensor2img(visuals['HR'])  # uint8
-				save_img_path = os.path.join(img_dir, '{:d}_{:s}_{:d}.png'.format(epoch, img_name, total_steps))
-
-				util.save_img(sr_img, save_img_path)
+				if epoch % config['logger']['img_freq'] == 0:
+					save_img_path = os.path.join(img_dir, '{:d}_{:s}_{:d}.png'.format(epoch, img_name, total_steps))
+					util.save_img(sr_img, save_img_path)
 				crop_size = config['dataset']['scale']
 				psnr, ssim = util.eval_psnr_and_ssim(sr_img, gt_img, crop_size) 
 				avg_psnr += psnr

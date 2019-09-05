@@ -14,8 +14,8 @@ dataset:
     data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 0  # per GPU
-    batch_size: 25
-    lr_size: 16
+    batch_size: 16
+    lr_size: 48
     repeat: 2
   test:
     name: Set5
@@ -39,7 +39,7 @@ network_G:
 
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 100
+  epoch: 1000
 
   cl_train: false
   lr_G: !!float 1e-4

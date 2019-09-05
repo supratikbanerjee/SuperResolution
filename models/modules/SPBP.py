@@ -103,7 +103,7 @@ class SubPixelBackProjection(nn.Module):
 
         #self.last_hidden = output
 
-        return output+x
+        return output
 
 
 

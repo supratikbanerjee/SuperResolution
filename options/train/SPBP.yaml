@@ -1,10 +1,10 @@
 #### general settings
-name: 0001_SPBP_Deep
+name: 0003_SPBP_Deep_Resnet_48
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda
+device: cuda:0
 
 #### datasets
 dataset:
@@ -15,7 +15,7 @@ dataset:
     shuffle: true
     n_workers: 0  # per GPU
     batch_size: 20
-    lr_size: 40
+    lr_size: 48
     repeat: 2
   test:
     name: Set5
@@ -57,6 +57,6 @@ train:
 logger:
   print_freq: 6 # epoch
   chkpt_freq: 100 # epoch
-  img_freq: 100
+  img_freq: 100 # epoch
   path: experiments/
   

@@ -64,11 +64,11 @@ def define_G(config):
 		netG = SPBP.SPBP(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
                                   num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
                                   upscale_factor=config['dataset']['scale'])
-    elif model == 'VDSR':
-        netG = VDSR.Net()
-    else:
-        raise NotImplementedError('Generator model [{:s}] not recognized'.format(model))
-    return netG
+	elif model == 'VDSR':
+		netG = VDSR.Net()
+	else:
+		raise NotImplementedError('Generator model [{:s}] not recognized'.format(model))
+	return netG
 
 # Discriminator
 def define_D(config):

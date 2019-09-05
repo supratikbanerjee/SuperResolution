@@ -11,10 +11,10 @@ dataset:
   scale: 2
   train:
     name: DIV2K
-    data_location: data/datasets/DIV2K/
+    data_location: data/datasets/BSDS300/train/
     shuffle: true
     n_workers: 1  # per GPU
-    batch_size: 40
+    batch_size: 20
     lr_size: 48
     repeat: 2
   test:

@@ -1,10 +1,10 @@
 #### general settings
-name: RACN_EXP_01
+name: _0001_VDSR
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda:1
+device: cuda
 
 #### datasets
 dataset:
@@ -13,8 +13,8 @@ dataset:
     name: DIV2K
     data_location: data/datasets/DIV2K/
     shuffle: true
-    n_workers: 0  # per GPU
-    batch_size: 16
+    n_workers: 1  # per GPU
+    batch_size: 40
     lr_size: 48
     repeat: 2
   test:
@@ -27,20 +27,11 @@ dataset:
 
 #### network structures
 network_G:
-  model: RCAN
-  n_resgroups: 10
-  n_resblocks: 20
-  num_features: 64
-  in_channels: 3
-  out_channels: 3
-  res_scale: 1
-  reduction: 16
-  rgb_range: 255
+  model: VDSR
 
 #### training settings: learning rate scheme, loss
 train:
   epoch: 1000
-
   cl_train: false
   lr_G: !!float 1e-4
   weight_decay_G: 0

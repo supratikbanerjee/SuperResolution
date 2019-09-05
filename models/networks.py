@@ -13,6 +13,7 @@ import models.modules.srfbn_arch as SRFBN_arch
 import models.modules.DBPN.dbpn as DBPN
 import models.modules.DBPN.dbpns as DBPNS
 import models.modules.SPBP as SPBP
+import models.modules.VDSR as VDSR
 from models import ar_loss
 
 # Generator
@@ -62,11 +63,12 @@ def define_G(config):
 	elif model == 'SPBP':
 		netG = SPBP.SPBP(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
                                   num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
-                                  upscale_factor=config['dataset']['scale']) 
-
-	else:
-		raise NotImplementedError('Generator model [{:s}] not recognized'.format(model))
-	return netG
+                                  upscale_factor=config['dataset']['scale'])
+    elif model == 'VDSR':
+        netG = VDSR.Net()
+    else:
+        raise NotImplementedError('Generator model [{:s}] not recognized'.format(model))
+    return netG
 
 # Discriminator
 def define_D(config):

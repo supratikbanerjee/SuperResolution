@@ -141,7 +141,7 @@ class SPBP(nn.Module):
         
     def forward(self, x):
 
-        inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
+        inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
 
         x = self.conv_in(x)
         x = self.feat_in(x)

@@ -1,5 +1,5 @@
 #### general settings
-name: 0003_SPBP_Deep_Resnet_48
+name: 0003_SPBP_Deep_bicubic_L1
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -47,7 +47,7 @@ train:
   lr_step: [200, 400, 600, 800]
   lr_gamma: 0.5
 
-  pixel_criterion: l2
+  pixel_criterion: l1
   pixel_weight: !!float 1e0
 
   manual_seed: 10

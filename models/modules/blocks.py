@@ -316,7 +316,7 @@ class ConcatBlock(nn.Module):
 # Upsampler
 ################
 def UpsampleConvBlock(upscale_factor, in_channels, out_channels, kernel_size, stride, valid_padding=True, padding=0, bias=True,\
-                 pad_type='zero', act_type='relu', norm_type=None, mode='nearest'):
+                 pad_type='zero', act_type='relu', norm_type=None, mode='bicubic'):
     upsample = nn.Upsample(scale_factor=upscale_factor, mode=mode)
     conv = ConvBlock(in_channels, out_channels, kernel_size, stride, bias=bias, valid_padding=valid_padding, padding=padding, \
                      pad_type=pad_type, act_type=act_type, norm_type=norm_type)

@@ -1,5 +1,5 @@
 #### general settings
-name: _0001_SRCNN
+name: _0004_SRCNN
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -52,6 +52,6 @@ train:
 logger:
   print_freq: 6 # epoch
   chkpt_freq: 100 # epoch
-  img_freq: 100
+  img_freq: 5
   path: experiments/
   

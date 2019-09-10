@@ -6,6 +6,7 @@ import random
 import os
 from PIL import Image
 from torchvision.transforms import Compose, CenterCrop, ToTensor
+import torch
 
 IMG_EXTENSIONS = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP']
 
@@ -37,8 +38,8 @@ class Dataset(data.Dataset):
 			crop_size = self.config[self.phase]['lr_size']
 			LR, HR = get_patch(LR, HR, crop_size, self.upscale_factor)
 
-		LR = self.target_transform(LR) 
-		HR = self.target_transform(HR)
+		LR = img2tensor(LR, 255) 
+		HR = img2tensor(HR, 255)
 		return LR, HR, path
 
 
@@ -55,6 +56,16 @@ class Dataset(data.Dataset):
 
 	def __len__(self):
 		return len(self.PATH) * self.repeat
+
+def img2tensor(img, rgb_range):
+	img = np.array(img)
+	# if img.shape[2] == 3: # for opencv imread
+	#     img = img[:, :, [2, 1, 0]]
+	np_transpose = np.ascontiguousarray(img.transpose((2, 0, 1)))
+	tensor = torch.from_numpy(np_transpose).float()
+	tensor.mul_(rgb_range / 255.)
+
+	return tensor
 
 def get_patch(img_in, img_tar, patch_size, scale):
     ih, iw = img_in.size[:2]

@@ -146,7 +146,7 @@ def tensor2img1(tensor, out_type=np.uint8, min_max=(0, 1)):
     return img_np.astype(out_type)
 
 def tensor2img(tensor):
-    array = np.transpose(quantize(tensor, 1).numpy(), (1, 2, 0)).astype(np.uint8)
+    array = np.transpose(quantize(tensor, 255).numpy(), (1, 2, 0)).astype(np.uint8)
     return array
 
 

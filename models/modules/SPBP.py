@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from .blocks import ConvBlock, DeconvBlock
+from .blocks import ConvBlock, DeconvBlock, MeanShift
 
 
 class CALayer(nn.Module):
@@ -115,6 +115,10 @@ class SPBP(nn.Module):
         self.num_features = num_features
         self.upscale_factor = upscale_factor
 
+        rgb_mean = (0.4488, 0.4371, 0.4040)
+        rgb_std = (1.0, 1.0, 1.0)
+        self.sub_mean = MeanShift(rgb_mean, rgb_std)
+
         # LR feature extraction block
         self.conv_in = ConvBlock(in_channels, 4*num_features,
                                  kernel_size=3,
@@ -137,9 +141,11 @@ class SPBP(nn.Module):
         self.conv_out = ConvBlock(num_features, out_channels,
                                   kernel_size=3,
                                   act_type=None, norm_type=norm_type)
+        self.add_mean = MeanShift(rgb_mean, rgb_std, 1)
 
         
     def forward(self, x):
+        x = self.sub_mean(x)
 
         inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
 
@@ -151,4 +157,5 @@ class SPBP(nn.Module):
         h = self.prelu(h)
 
         h = torch.add(inter_res, self.conv_out(h))
+        h = self.add_mean(h)
         return h

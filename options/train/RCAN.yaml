@@ -1,10 +1,10 @@
 #### general settings
-name: RACN_EXP_01
+name: _0001_RCAN
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda:1
+device: cuda:0
 
 #### datasets
 dataset:

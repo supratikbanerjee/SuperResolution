@@ -1,6 +1,6 @@
 import torchvision
 import torch.nn as nn
-from models.modules.capsule.capsule_network import CapsuleNetwork
+#from models.modules.capsule.capsule_network import CapsuleNetwork
 import models.modules.cnn_models as CNN_arch
 import models.modules.discriminator_vgg_arch as SRGAN_arch
 import models.modules.RRDBNet_arch as RRDBNet_arch
@@ -13,6 +13,7 @@ import models.modules.DBPN.dbpn as DBPN
 import models.modules.DBPN.dbpns as DBPNS
 import models.modules.SPBP as SPBP
 import models.modules.VDSR as VDSR
+import models.modules.EDSR as EDSR
 from models import ar_loss
 
 # Generator
@@ -63,6 +64,8 @@ def define_G(config):
                                   upscale_factor=config['dataset']['scale'])
 	elif model == 'VDSR':
 		netG = VDSR.VDSR()
+	elif model == 'EDSR':
+		netG = EDSR.EDSR(n_resblocks=net_config['n_resblocks'], n_feats=net_config['n_feats'], res_scale=net_config['res_scale'], scale=config['dataset']['scale'])
 	else:
 		raise NotImplementedError('Generator model [{:s}] not recognized'.format(model))
 	return netG
@@ -81,16 +84,16 @@ def define_D(config):
 		netD = SRGAN_arch.FDLeakyVGG()
 	elif model == 'fdiscriminator_vgg_128':
 		netD = SRGAN_arch.FDiscriminator_VGG_128(in_nc=256, nf=64)
-	elif model == 'CapsNet':
-		netD = CapsuleNetwork(image_width=net_config['size'],
-                         image_height=net_config['size'],
-                         image_channels=net_config['channels'],
-                         conv_inputs=net_config['conv_in'],
-                         conv_outputs=net_config['conv_out'],
-                         num_primary_units=net_config['num_units'],
-                         primary_unit_size=net_config['unit_size'],
-                         num_output_units=net_config['out'],
-                         output_unit_size=net_config['out_unit_size'])
+	#elif model == 'CapsNet':
+	#	netD = CapsuleNetwork(image_width=net_config['size'],
+    #                     image_height=net_config['size'],
+    #                     image_channels=net_config['channels'],
+    #                     conv_inputs=net_config['conv_in'],
+    #                     conv_outputs=net_config['conv_out'],
+    #                     num_primary_units=net_config['num_units'],
+    #                     primary_unit_size=net_config['unit_size'],
+    #                     num_output_units=net_config['out'],
+    #                     output_unit_size=net_config['out_unit_size'])
 	else:
 		raise NotImplementedError('Discriminator model [{:s}] not recognized'.format(model))
 	return netD

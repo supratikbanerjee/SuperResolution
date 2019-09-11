@@ -1,6 +1,9 @@
+# https://github.com/Paper99/SRFBN_CVPR19/blob/master/networks/srfbn_arch.py
+
 import torch
 import torch.nn as nn
 from .blocks import ConvBlock, DeconvBlock, MeanShift
+
 
 class FeedbackBlock(nn.Module):
     def __init__(self, num_features, num_groups, upscale_factor, act_type, norm_type):
@@ -122,7 +125,7 @@ class SRFBN(nn.Module):
         # RGB mean for DIV2K
         rgb_mean = (0.4488, 0.4371, 0.4040)
         rgb_std = (1.0, 1.0, 1.0)
-        #self.sub_mean = MeanShift(rgb_mean, rgb_std)
+        self.sub_mean = MeanShift(rgb_mean, rgb_std)
 
         # LR feature extraction block
         self.conv_in = ConvBlock(in_channels, 4*num_features,
@@ -147,12 +150,12 @@ class SRFBN(nn.Module):
                                   act_type=None, norm_type=norm_type)
 
         
-        #self.add_mean = MeanShift(rgb_mean, rgb_std, 1)
+        self.add_mean = MeanShift(rgb_mean, rgb_std, 1)
 
     def forward(self, x):
         self._reset_state()
 
-        #x = self.sub_mean(x)
+        x = self.sub_mean(x)
         # uncomment for pytorch 0.4.0
         # inter_res = self.upsample(x)
         
@@ -167,7 +170,7 @@ class SRFBN(nn.Module):
             h = self.block(x)
 
             h = torch.add(inter_res, self.conv_out(self.out(h)))
-            #h = self.add_mean(h)
+            h = self.add_mean(h)
             outs.append(h)
 
         return outs # return output of every timesteps

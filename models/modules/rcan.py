@@ -1,6 +1,8 @@
-from models.modules import common
+# https://github.com/yulunzhang/RCAN/blob/master/RCAN_TrainCode/code/model/rcan.py
 
+from models.modules import common
 import torch.nn as nn
+
 
 def make_model(args, parent=False):
     return RCAN(args)

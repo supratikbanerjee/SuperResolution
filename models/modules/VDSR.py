@@ -1,42 +1,44 @@
-import torch
+#https://github.com/thstkdgus35/EDSR-PyTorch/blob/master/src/model/vdsr.py
+
+from models.modules import common
+
 import torch.nn as nn
+import torch.nn.init as init
 import torch.nn.functional as F
-from math import sqrt
 
-class Conv_ReLU_Block(nn.Module):
-    def __init__(self):
-        super(Conv_ReLU_Block, self).__init__()
-        self.conv = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.relu = nn.ReLU(inplace=True)
-        
-    def forward(self, x):
-        return self.relu(self.conv(x))
-        
-class Net(nn.Module):
-    def __init__(self):
-        super(Net, self).__init__()
-        self.residual_layer = self.make_layer(Conv_ReLU_Block, 18)
-        self.input = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.output = nn.Conv2d(in_channels=64, out_channels=3, kernel_size=3, stride=1, padding=1, bias=False)
-        self.relu = nn.ReLU(inplace=True)
-    
-        for m in self.modules():
-            if isinstance(m, nn.Conv2d):
-                n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, sqrt(2. / n))
-                
-    def make_layer(self, block, num_of_layer):
-        layers = []
-        for _ in range(num_of_layer):
-            layers.append(block())
-        return nn.Sequential(*layers)
+
+class VDSR(nn.Module):
+    def __init__(self, conv=common.default_conv):
+        super(VDSR, self).__init__()
+
+        n_resblocks = 18
+        n_feats = 64
+        kernel_size = 3 
+        rgb_mean = (0.4488, 0.4371, 0.4040)
+        rgb_std = (1.0, 1.0, 1.0)
+        self.sub_mean = common.MeanShift(255, rgb_mean, rgb_std)
+        self.add_mean = common.MeanShift(255, rgb_mean, rgb_std, 1)
+
+        def basic_block(in_channels, out_channels, act):
+            return common.BasicBlock(
+                conv, in_channels, out_channels, kernel_size,
+                bias=True, bn=False, act=act
+            )
+
+        # define body module
+        m_body = []
+        m_body.append(basic_block(3, n_feats, nn.ReLU(True)))
+        for _ in range(n_resblocks - 2):
+            m_body.append(basic_block(n_feats, n_feats, nn.ReLU(True)))
+        m_body.append(basic_block(n_feats, 3, None))
+
+        self.body = nn.Sequential(*m_body)
 
     def forward(self, x):
+        x = self.sub_mean(x)
         x = F.interpolate(x , scale_factor=2, mode='bicubic')
-        residual = x
-        out = self.relu(self.input(x))
-        out = self.residual_layer(out)
-        out = self.output(out)
-        out = torch.add(out,residual)
-        return out
- 
+        res = self.body(x)
+        res += x
+        x = self.add_mean(res)
+
+        return x 

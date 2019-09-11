@@ -5,10 +5,9 @@ import models.modules.cnn_models as CNN_arch
 import models.modules.discriminator_vgg_arch as SRGAN_arch
 import models.modules.RRDBNet_arch as RRDBNet_arch
 import models.modules.SRResNet_arch as SRResNet_arch
-import models.modules.rcan as RCAN_arch
-import models.modules.dbpn_arch as DDBPN_arch
-import models.modules.rdn_arch as RDN_arch
-import models.modules.RDCAN as RDCAN_arch
+import models.modules.rcan as RCAN
+import models.modules.rdn as RDN
+#import models.modules.RDCAN as RDCAN_arch
 import models.modules.srfbn_arch as SRFBN_arch
 import models.modules.DBPN.dbpn as DBPN
 import models.modules.DBPN.dbpns as DBPNS
@@ -33,22 +32,20 @@ def define_G(config):
 	elif model == 'FSRCNN':
 		netG = CNN_arch.FSRCNN(config['dataset']['scale'])
 	elif model == 'RCAN':
-		netG = RCAN_arch.RCAN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
+		netG = RCAN.RCAN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
                              num_features=net_config['num_features'], n_resgroups = net_config['n_resgroups'],
                              n_resblocks = net_config['n_resblocks'], res_scale=net_config['res_scale'],
                              scale=config['dataset']['scale'], reduction=net_config['reduction'], rgb_range=net_config['rgb_range'])
-	elif model == 'DDBPN':
-		netG = DDBPN_arch.D_DBPN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
-                           num_features=net_config['num_features'], bp_stages=net_config['num_blocks'],
-                           upscale_factor=config['dataset']['scale'])
+
 	elif model == 'RDN':
-		netG = RDN_arch.RDN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
+		netG = RDN.RDN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
 			num_features=net_config['num_features'], num_blocks = net_config['num_blocks'], num_layers = net_config['num_layers'],
 			upscale_factor=config['dataset']['scale'])
-	elif model == 'RDCAN':
-		netG = RDCAN_arch.RDCAN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
-                                  num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
-                                  upscale_factor=config['dataset']['scale'], reduction=net_config['reduction'])
+	#elif model == 'RDCAN':
+	#	netG = RDCAN_arch.RDCAN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
+    #                              num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
+    #                              upscale_factor=config['dataset']['scale'], reduction=net_config['reduction'])
+	
 	elif model == 'SRFBN':
 		netG = SRFBN_arch.SRFBN(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
                                   num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
@@ -65,7 +62,7 @@ def define_G(config):
                                   num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
                                   upscale_factor=config['dataset']['scale'])
 	elif model == 'VDSR':
-		netG = VDSR.Net()
+		netG = VDSR.VDSR()
 	else:
 		raise NotImplementedError('Generator model [{:s}] not recognized'.format(model))
 	return netG

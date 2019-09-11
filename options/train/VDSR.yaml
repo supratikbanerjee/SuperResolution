@@ -4,7 +4,7 @@ is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda
+device: cuda:0
 
 #### datasets
 dataset:
@@ -15,7 +15,7 @@ dataset:
     shuffle: true
     n_workers: 1  # per GPU
     batch_size: 40
-    lr_size: 64
+    lr_size: 41
     repeat: 2
   test:
     name: Set5

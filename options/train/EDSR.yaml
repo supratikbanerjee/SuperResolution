@@ -1,5 +1,5 @@
 #### general settings
-name: _0005_SRCNN
+name: _0001_EDSR
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -15,7 +15,7 @@ dataset:
     shuffle: true
     n_workers: 1  # per GPU
     batch_size: 40
-    lr_size: 13
+    lr_size: 41
     repeat: 2
   test:
     name: Set5
@@ -27,7 +27,7 @@ dataset:
 
 #### network structures
 network_G:
-  model: SRCNN
+  model: EDSR
 
 #### training settings: learning rate scheme, loss
 train:

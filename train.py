@@ -97,6 +97,7 @@ def main(config):
 				
 			iter_start_time = time.time()
 
+
         ##### Start Validation #####
 		if epoch % val_freq == 0:
 			#logger_val = logging.getLogger('val')
@@ -143,6 +144,8 @@ def main(config):
 		
 		if epoch % config['logger']['chkpt_freq'] == 0:
 			trainer.save(epoch)
+
+		trainer.update_learning_rate(epoch)
 	if config['use_visdom']:
 		visualizer.save()
 	

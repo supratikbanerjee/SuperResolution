@@ -69,6 +69,8 @@ class CNN():
 			pixel_loss_g = self.pixel_weight * self.pixel_criterion(self.hr_fake, self.hr_real) 
 		pixel_loss_g.backward()
 		self.optimizer_G.step()
+		#for param_group in self.optimizer_G.param_groups:
+		#		print(param_group['lr'])
 		self.logs['p_G'] = pixel_loss_g.item()
 		if isinstance(self.hr_fake, list): # to get visuals
 				self.hr_fake = self.hr_fake[-1]
@@ -114,6 +116,9 @@ class CNN():
 		visuals['SR'] = self.hr_fake.detach()[0].float().cpu()
 		visuals['HR'] = self.hr_real.detach()[0].float().cpu()
 		return visuals
+
+	def update_learning_rate(self, epoch):
+		self.scheduler_G.step(epoch)
 
 	def get_logs(self):
 		return self.logs

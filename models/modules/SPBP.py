@@ -84,8 +84,9 @@ class SubPixelBackProjection(nn.Module):
             LD_L = torch.cat(tuple(lr_features), 1)    # when idx == 0, lr_features == [x]
             if idx > 0:
                 LD_L = self.uptranBlocks[idx-1](LD_L)
+            LD_L = self.upPac[idx](LD_L)
             LD_H = self.prelu(self.upBlocks[idx](LD_L))
-            LD_H = self.upPac[idx](LD_H)
+            
 
             hr_features.append(LD_H)
 
@@ -153,8 +154,7 @@ class SPBP(nn.Module):
         x = self.feat_in(x)
 
         h = self.block(x)
-        h = self.pixel_shuffle(h)
-        h = self.conv4(h)
+        h = self.pixel_shuffle(self.conv4(h))
         h = self.prelu(h)
 
         h = torch.add(inter_res, self.conv_out(h))

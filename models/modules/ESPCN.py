@@ -9,7 +9,7 @@ class ESPCN(nn.Module):
         self.conv2 = nn.Conv2d(64, 32, kernel_size=3, padding=1)
         self.conv3 = nn.Conv2d(32, 3 * scale * scale, kernel_size=3, padding=1)
         self.pixel_shuffle = nn.PixelShuffle(scale)
-        self.conv4 = nn.Conv2d(3, 3, kernel_size=1, padding=0)
+        #self.conv4 = nn.Conv2d(3, 3, kernel_size=1, padding=0)
         self.relu = nn.ReLU()
         self.tanh = nn.Tanh()
 
@@ -18,5 +18,5 @@ class ESPCN(nn.Module):
         x = self.relu(self.conv2(x))
         x = self.relu(self.conv3(x))
         x = self.pixel_shuffle(x)
-        x = self.conv4(x)
+        #x = self.conv4(x)
         return x

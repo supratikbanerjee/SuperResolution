@@ -14,6 +14,8 @@ import models.modules.DBPN.dbpns as DBPNS
 import models.modules.SPBP as SPBP
 import models.modules.VDSR as VDSR
 import models.modules.EDSR as EDSR
+import models.modules.ESPCN as ESPCN
+
 from models import ar_loss
 
 # Generator
@@ -62,6 +64,8 @@ def define_G(config):
 		netG = SPBP.SPBP(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
                                   num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
                                   upscale_factor=config['dataset']['scale'])
+	elif model == 'ESPCN':
+		netG = ESPCN.ESPCN(scale=config['dataset']['scale'])
 	elif model == 'VDSR':
 		netG = VDSR.VDSR()
 	elif model == 'EDSR':

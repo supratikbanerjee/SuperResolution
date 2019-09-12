@@ -5,7 +5,6 @@ import numpy as np
 import random
 import os
 from PIL import Image
-from torchvision.transforms import Compose, CenterCrop, ToTensor
 import torch
 
 IMG_EXTENSIONS = ['.jpg', '.JPG', '.jpeg', '.JPEG', '.png', '.PNG', '.ppm', '.PPM', '.bmp', '.BMP']
@@ -18,22 +17,26 @@ class Dataset(data.Dataset):
 		self.PATH = [os.path.join(image_dir, x) for x in os.listdir(image_dir) if is_image(x)]
 		self.config = config
 		self.phase = phase
-		self.repeat = config[self.phase]['repeat']
-		self.upscale_factor = config['scale']
+		self.repeat = self.config[self.phase]['repeat']
+		self.upscale_factor = self.config['scale']
 		self.LR = []
 		self.HR = []
-		self.target_transform = Compose([
-				ToTensor(),
-				])
-		self.enum_dl()
+		if self.config['read'] == 'ram':
+			self.enum_dl()
 
 	def __getitem__(self, index):
+
 		if self.phase == 'train':
 			index = index % len(self.PATH)
 		path = self.PATH[index]
-		LR = self.LR[index]
-		HR = self.HR[index]
-		
+		if self.config['read'] == 'ram':
+			LR = self.LR[index]
+			HR = self.HR[index]
+		else:
+			HR = load_image(path)
+			LR = HR.resize((int(HR.size[0]/self.upscale_factor), int(HR.size[1]/self.upscale_factor)), Image.BICUBIC)
+				
+			
 		if self.phase == 'train':
 			crop_size = self.config[self.phase]['lr_size']
 			LR, HR = get_patch(LR, HR, crop_size, self.upscale_factor)

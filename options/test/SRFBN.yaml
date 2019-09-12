@@ -1,13 +1,14 @@
-name: SRFBN_x2
+name: _0001_x2_SRFBN_NOT_DONE
 is_train: false
 model: cnn
-device: cuda
+device: cuda:0
 
 dataset:
-  scale: 4
+  read: ram # disk
+  scale: 2
   test_1:
     name: Set5
-    data_location: data/datasets/Set5/test/
+    data_location: data/datasets/Set5/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1
@@ -21,7 +22,28 @@ dataset:
     repeat: 1
   test_3:  # the 2st test dataset
     name: BSDS100
-    data_location: data/datasets/BSDS300/test/
+    data_location: data/datasets/BSDS100/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    repeat: 1
+  test_4:  # the 2st test dataset
+    name: Urban100
+    data_location: data/datasets/Urban100/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    repeat: 1
+  test_5:  # the 2st test dataset
+    name: Manga109
+    data_location: data/datasets/Manga109/
+    shuffle: false
+    n_workers: 1  # per GPU
+    batch_size: 1
+    repeat: 1
+  test_5:  # the 2st test dataset
+    name: historical
+    data_location: data/datasets/historical/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1

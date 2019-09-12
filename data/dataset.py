@@ -102,7 +102,7 @@ def get_test_set(config):
 def get_test_sets(config, logger):
 	test_dataloaders = {}
 	for test_set in config:
-		if test_set != 'scale':
+		if test_set != 'scale' and test_set != 'read':
 			# print(test_set)
 			test_data = Dataset(config, test_set)
 			test_dataloader = data.DataLoader(dataset=test_data, batch_size=config[test_set]['batch_size'], shuffle=config[test_set]['shuffle'], pin_memory=True)

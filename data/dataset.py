@@ -108,5 +108,5 @@ def get_test_sets(config, logger):
 			test_dataloader = data.DataLoader(dataset=test_data, batch_size=config[test_set]['batch_size'], shuffle=config[test_set]['shuffle'], pin_memory=True)
 			test_size = len(test_dataloader)
 			logger.log('Test Images: {:,d} in {:s}'.format(test_size, config[test_set]['name']))
-			test_dataloaders[test_set] = test_dataloader
+			test_dataloaders[config[test_set]['name']] = test_dataloader
 	return test_dataloaders

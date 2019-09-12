@@ -41,9 +41,9 @@ dataset:
     n_workers: 1  # per GPU
     batch_size: 1
     repeat: 1
-  test_5:  # the 2st test dataset
+  test_6:  # the 2st test dataset
     name: historical
-    data_location: data/datasets/historical/
+    data_location: data/datasets/historical/LR/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1

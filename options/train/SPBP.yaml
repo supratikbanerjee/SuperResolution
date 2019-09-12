@@ -1,5 +1,5 @@
 #### general settings
-name: 0001_SPBP_Deep_bicubic_L1
+name: 0001_SPBP
 is_train: true
 use_visdom: false
 visdom_port: 8067

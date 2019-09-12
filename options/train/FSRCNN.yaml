@@ -1,5 +1,5 @@
 #### general settings
-name: _0005_FSRCNN
+name: _0001_FSRCNN
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -8,6 +8,7 @@ device: cuda:0
 
 #### datasets
 dataset:
+  read: ram # disk
   scale: 2
   train:
     name: DIV2K

@@ -1,13 +1,14 @@
 #### general settings
-name: RDACN_TEST_EXP_04
+name: _0001_SRFBN
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda
+device: cuda:0
 
 #### datasets
 dataset:
+  read: ram # disk
   scale: 2
   train:
     name: DIV2K
@@ -28,11 +29,11 @@ dataset:
 #### network structures
 network_G:
   model: SRFBN
-  num_features: 16
+  num_features: 64
   in_channels: 3
   out_channels: 3
-  num_steps: 1
-  num_groups: 1
+  num_steps: 4
+  num_groups: 6
 
 #### training settings: learning rate scheme, loss
 train:

@@ -1,13 +1,14 @@
 #### general settings
-name: DDBPN_EXP_01
+name: _0001_DBPN
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda
+device: cuda:0
 
 #### datasets
 dataset:
+  read: ram # disk
   scale: 2
   train:
     name: DIV2K

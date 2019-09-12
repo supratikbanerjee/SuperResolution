@@ -8,13 +8,14 @@ device: cuda:0
 
 #### datasets
 dataset:
+  read: ram # disk
   scale: 2
   train:
     name: DIV2K
     data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 1  # per GPU
-    batch_size: 40
+    batch_size: 64
     lr_size: 41
     repeat: 2
   test:

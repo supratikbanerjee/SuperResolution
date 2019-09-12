@@ -16,7 +16,7 @@ dataset:
     shuffle: true
     n_workers: 1  # per GPU
     batch_size: 40
-    lr_size: 13
+    lr_size: 34
     repeat: 2
   test:
     name: Set5

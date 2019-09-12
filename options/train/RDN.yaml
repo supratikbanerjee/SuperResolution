@@ -1,20 +1,21 @@
 #### general settings
-name: RDN_TEST_EXP_01
+name: _0001_RDN
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda
+device: cuda:0
 
 #### datasets
 dataset:
+  read: ram # disk
   scale: 2
   train:
     name: DIV2K
     data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 0  # per GPU
-    batch_size: 25
+    batch_size: 16
     lr_size: 32
     repeat: 2
   test:
@@ -28,7 +29,7 @@ dataset:
 #### network structures
 network_G:
   model: RDN
-  num_features: 32
+  num_features: 64
   in_channels: 3
   out_channels: 3
   num_blocks: 16
@@ -48,7 +49,7 @@ train:
   lr_step: [200, 400, 600, 800]
   lr_gamma: 0.5
 
-  pixel_criterion: l2
+  pixel_criterion: l1
   pixel_weight: !!float 1e0
 
   manual_seed: 10

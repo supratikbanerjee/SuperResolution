@@ -28,7 +28,7 @@ class CALayer(nn.Module):
 class SubPixelBackProjection(nn.Module):
     def __init__(self, num_features, num_groups, upscale_factor, act_type, norm_type):
         super(SubPixelBackProjection, self).__init__()
-        stride = 2
+        stride = upscale_factor
         padding = 1
         kernel_size = 3
 
@@ -78,6 +78,7 @@ class SubPixelBackProjection(nn.Module):
 
         lr_features = []
         hr_features = []
+        #print(x.shape)
         lr_features.append(x)
 
         for idx in range(self.num_groups):

@@ -4,12 +4,12 @@ is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda:0
+device: cuda:1
 
 #### datasets
 dataset:
   read: ram # disk
-  scale: 2
+  scale: 4
   train:
     name: DIV2K
     data_location: data/datasets/DIV2K/
@@ -20,7 +20,7 @@ dataset:
     repeat: 2
   test:
     name: Set5
-    data_location: data/datasets/Set5/
+    data_location: data/datasets/Set14/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1

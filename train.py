@@ -83,7 +83,7 @@ def main(config):
 		if epoch % print_freq == 0:
 			tt = time.time() - iter_start_time
 			logs = trainer.get_logs()
-			message = '[ Train - epoch:{}, iter:{}, time:{:.3f} ] '.format(epoch, total_steps, tt)
+			message = '[ Train ] - epoch:{}, iter:{}, time:{:.3f}'.format(epoch, total_steps, tt)
 			for k, v in logs.items():
 				message += '{:s}: {:.4f} '.format(k, v)
 			logger.log(message, screen=False)
@@ -113,8 +113,7 @@ def main(config):
 				img_name = img_name[:img_name.index('.')]
 				img_dir = experiment_dir+'/val_image/'+img_name
 				util.mkdir(img_dir)
-				inf_time = trainer.test(batch)
-				print(inf_time)
+				inf_time = trainer.test(batch)                
 				visuals = trainer.get_current_visuals()
 				sr_img = util.tensor2img(visuals['SR'])  # uint8
 				gt_img = util.tensor2img(visuals['HR'])  # uint8
@@ -125,6 +124,7 @@ def main(config):
 				psnr, ssim = util.eval_psnr_and_ssim(sr_img, gt_img, crop_size) 
 				avg_psnr += psnr
 				avg_ssim += ssim
+				logger_val.log('[ Inference ] - name:{}, dim:{}, time:{:.8f}, psnr: {:.4f}, ssim {:.4f}'.format(img_name, gt_img.shape[:2], inf_time, psnr, ssim))
 			avg_psnr = avg_psnr / idx
 			avg_ssim = avg_ssim / idx
 			valid_t = time.time() - valid_start_time
@@ -134,11 +134,11 @@ def main(config):
 				ssim_result = {'ssim': avg_ssim}
 				visualizer.plot(ssim_result, epoch, 'ssim_eval', 'ssim')
 				trainer.plot_loss(visualizer, epoch)
-			logger_val.log('[ Test - epoch:{}, iter:{}, time:{:.3f}] psnr: {:.4f} ssim {:.4f}'.format(
+			logger_val.log('[ Test ] - epoch:{}, iter:{}, time:{:.3f}, psnr: {:.4f}, ssim {:.4f}'.format(
                     epoch, total_steps, valid_t, avg_psnr, avg_ssim))
 			trainer.update_eval(avg_psnr, avg_ssim, epoch)
 			best_eval = trainer.get_eval()
-			logger_val.log('[ Best - psnr_epoch:{}, psnr:{:.4f}, ssim_epoch:{} ssim: {:.4f}]'.format(
+			logger_val.log('[ Best ] - psnr_epoch:{}, psnr:{:.4f}, ssim_epoch:{}, ssim: {:.4f}'.format(
                     best_eval['psnr_epoch'], best_eval['psnr'], best_eval['ssim_epoch'], best_eval['ssim']))
 			iter_start_time = time.time()
 		

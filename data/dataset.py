@@ -34,7 +34,7 @@ class Dataset(data.Dataset):
 			HR = self.HR[index]
 		else:
 			HR = load_image(path)
-			LR = HR.resize((int(HR.size[0]/self.upscale_factor), int(HR.size[1]/self.upscale_factor)), Image.BICUBIC)
+			LR = HR.resize((int(HR.size[0]//self.upscale_factor), int(HR.size[1]//self.upscale_factor)), Image.BICUBIC)
 				
 			
 		if self.phase == 'train':
@@ -50,8 +50,8 @@ class Dataset(data.Dataset):
 		batch_size = self.config[self.phase]['batch_size']
 		with tqdm(total=len(self.PATH), desc=self.config[self.phase]['name'], miniters=1) as t:
 			for i, path in enumerate(self.PATH):
-				img = load_image(path)
-				LR = img.resize((int(img.size[0]/self.upscale_factor), int(img.size[1]/self.upscale_factor)), Image.BICUBIC)
+				img = mod_crop(load_image(path), self.upscale_factor)
+				LR = img.resize((int(img.size[0]//self.upscale_factor), int(img.size[1]//self.upscale_factor)), Image.BICUBIC)
 				self.LR.append(LR)
 				self.HR.append(img)
 				t.set_postfix_str("Batches: [%d/%d]" % ((i+1)//batch_size, len(self.PATH)/batch_size))				
@@ -81,6 +81,10 @@ def get_patch(img_in, img_tar, patch_size, scale):
     img_in = img_in.crop((iy,ix,iy + ip, ix + ip))
     img_tar = img_tar.crop((ty,tx,ty + tp, tx + tp))
     return img_in, img_tar
+
+def mod_crop(im, scale):
+    h, w = im.size[:2]
+    return im.crop((0,0,h - (h % scale), w - (w % scale)))
 
 def is_image(filename):
     return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)

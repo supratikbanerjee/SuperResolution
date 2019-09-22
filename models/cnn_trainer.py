@@ -14,6 +14,7 @@ class CNN():
 		self.eval = {'psnr':0.0, 'ssim':0.0, 'ssim_epoch':0, 'psnr_epoch':0}
 		self.config = config
 		self.device = self.config['device']
+		
 
 		# define model
 		self.netG = networks.define_G(self.config).to(self.device)

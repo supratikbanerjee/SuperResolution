@@ -1,9 +1,10 @@
 #### general settings
-name: _0001_SRGAN_DIV2K
+name: _0001_SRGAN
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: gan
+dual_D: false
 device: cuda:0
 
 #### datasets
@@ -73,4 +74,4 @@ logger:
   path: experiments/
   
 path:
-  pretrain_model_G: trained_models/1000_SRResNet_x2_netG.pth
+  pretrain_model_G: trained_models/1000_SRCNN_x2_netG.pth

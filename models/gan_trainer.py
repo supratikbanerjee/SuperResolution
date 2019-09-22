@@ -14,6 +14,7 @@ class GAN():
 		self.eval = {'psnr':0.0, 'ssim':0.0, 'ssim_epoch':0, 'psnr_epoch':0}
 		self.config = config
 		self.device = self.config['device']
+		self.dual_D = self.config['dual_D']
 
 		self.netG = networks.define_G(self.config).to(self.device)
 
@@ -22,8 +23,9 @@ class GAN():
 			
 			# define model
 			self.netD = networks.define_D(self.config).to(self.device)
-			self.netFD = networks.define_D({'network_D':{'model':'fdiscriminator_vgg_128'}}).to(self.device)
 			self.netF = networks.define_F(self.config).to(self.device)
+			if self.dual_D:
+				self.netFD = networks.define_D({'network_D':{'model':'fdiscriminator_vgg_128'}}).to(self.device)
 
 			self.pixel_criterion = networks.loss_criterion(self.train_config['pixel_criterion']).to(self.device)
 			self.adversarial_criterion = networks.loss_criterion(self.train_config['adversarial_criterion']).to(self.device)
@@ -103,23 +105,29 @@ class GAN():
 			pixel_loss_g = self.pixel_weight * self.pixel_criterion(self.hr_fake, self.hr_real) 
 			feature_loss_g = self.feature_weight * self.feature_criterion(fake_features, real_features)
 			proba = self.netD(self.hr_fake)
-			fproba = self.netFD(fake_features)
+			if self.dual_D:
+				fproba = self.netFD(fake_features)
 
 			if self.train_config['gan_type'] == 'gan':
-				adversarial_loss_g = self.adversarial_weight * self.adversarial_criterion(proba, self.get_target(proba, True))
+				adversarial_loss_g = self.adversarial_criterion(proba, self.get_target(proba, True))
 			elif self.train_config['gan_type'] == 'ragan':
+				
 				proba_r = self.netD(self.hr_real)
-				fproba_r = self.netFD(real_features)
+				
 				adversarial_loss_g =  (
 					self.adversarial_criterion(proba_r - torch.mean(proba), self.get_target(proba_r, False)) +
 					self.adversarial_criterion(proba - torch.mean(proba_r), self.get_target(proba, True))) / 2
 
-				adv_feat_g = (
+				if self.dual_D:
+					fproba_r = self.netFD(real_features)
+					adv_feat_g = (
 					self.adversarial_criterion(fproba_r - torch.mean(fproba), self.get_target(fproba_r, False)) +
 					self.adversarial_criterion(fproba - torch.mean(fproba_r), self.get_target(fproba, True))) / 2
+					adversarial_loss_g += adv_feat_g
+
 
 		content_loss = pixel_loss_g + feature_loss_g
-		perceptual_loss = content_loss + self.adversarial_weight * (adversarial_loss_g + adv_feat_g)
+		perceptual_loss = content_loss + self.adversarial_weight * adversarial_loss_g
 		# total_loss_g = pixel_loss_g + adversarial_loss_g + feature_loss_g
 		self.logs['p_G'] = pixel_loss_g.item()
 		self.logs['f_G'] = feature_loss_g.item()
@@ -133,12 +141,13 @@ class GAN():
 
 		#self.scheduler_D.step()
 		self.netD.train()
-		self.netFD.train()
 		self.netD.zero_grad()
-		self.netFD.zero_grad()
+		if self.dual_D:
+			self.netFD.train()
+			self.netFD.zero_grad()
+		
 		real_proba = self.netD(self.hr_real)
 		
-
 		fake_loss_d = 0.0
 		if self.train_config['cl_train']:
 			fake_probas = [self.netD(Variable(sr)) for sr in self.hr_fake]
@@ -151,23 +160,26 @@ class GAN():
 			fake_features = self.netF(Variable(self.hr_fake))
 
 			fake_proba = self.netD(Variable(self.hr_fake))
-
-			real_fproba = self.netFD(Variable(real_features))
-			fake_fproba = self.netFD(Variable(fake_features))
+			
 			if self.train_config['gan_type'] == 'gan':
 				real_loss_d = self.adversarial_criterion(real_proba, self.get_target(real_proba, True))
 				fake_loss_d = self.adversarial_criterion(fake_proba, self.get_target(fake_proba, False))
 			elif self.train_config['gan_type'] == 'ragan':
 				real_loss_d = self.adversarial_criterion(real_proba - torch.mean(fake_proba), self.get_target(real_proba, True))
 				fake_loss_d = self.adversarial_criterion(fake_proba - torch.mean(real_proba), self.get_target(fake_proba, False))
-
-				real_floss_d = self.adversarial_criterion(real_fproba - torch.mean(fake_fproba), self.get_target(real_fproba, True))
-				fake_floss_d = self.adversarial_criterion(fake_fproba - torch.mean(real_fproba), self.get_target(fake_fproba, False))
+				if self.dual_D:
+					real_fproba = self.netFD(Variable(real_features))
+					fake_fproba = self.netFD(Variable(fake_features))
+					real_floss_d = self.adversarial_criterion(real_fproba - torch.mean(fake_fproba), self.get_target(real_fproba, True))
+					fake_floss_d = self.adversarial_criterion(fake_fproba - torch.mean(real_fproba), self.get_target(fake_fproba, False))
 
 		#print(real_proba, fake_proba)
-		total_loss_d = (real_loss_d + fake_loss_d)/2
-		total_floss_d = (real_floss_d + fake_floss_d)/2
-		total = self.real_weightD * total_loss_d + self.fake_weightD * total_floss_d
+		total_loss_d = (self.real_weightD * real_loss_d + self.fake_weightD * fake_loss_d)
+		if self.dual_D:
+			total_floss_d = (self.real_weightD * real_floss_d + self.fake_weightD * fake_floss_d)
+			total_loss_d += total_floss_d
+		total = total_loss_d
+
 		self.logs['r_D'] = real_loss_d.item()
 		self.logs['f_D'] = fake_loss_d.item()
 		self.logs['totalD'] = total.item()
@@ -232,11 +244,14 @@ class GAN():
 		param['G'] = sum(map(lambda x: x.numel(), self.netG.parameters()))
 		param['D'] = sum(map(lambda x: x.numel(), self.netD.parameters()))
 		param['F'] = sum(map(lambda x: x.numel(), self.netF.parameters()))
-		param['FD'] = sum(map(lambda x: x.numel(), self.netFD.parameters()))
+
 		logger.log('Network G : {:s}, with parameters: [{:,d}]'.format(self.config['network_G']['model'], param['G']))
 		logger.log('Network D : {:s}, with parameters: [{:,d}]'.format(self.config['network_D']['model'], param['D']))
 		logger.log('Network F : {:s}, with parameters: [{:,d}]'.format(self.config['train']['feature_extractor'], param['F']))
-		logger.log('Network FD : {:s}, with parameters: [{:,d}]'.format('feature_D', param['FD']))
+		if self.dual_D:
+			param['FD'] = sum(map(lambda x: x.numel(), self.netFD.parameters()))
+			logger.log('Network FD : {:s}, with parameters: [{:,d}]'.format('feature_D', param['FD']))
+		
 
 
 	def get_current_visuals(self):
@@ -252,3 +267,7 @@ class GAN():
 	def load(self):
 		checkpoint = torch.load(self.config['path']['pretrain_model_G'])
 		self.netG.load_state_dict(checkpoint['state_dict'])
+
+	def update_learning_rate(self, epoch):
+		self.scheduler_G.step(epoch)
+		self.scheduler_D.step(epoch)

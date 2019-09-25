@@ -17,11 +17,11 @@ dataset:
     shuffle: true
     n_workers: 1  # per GPU
     batch_size: 32
-    lr_size: 64
+    lr_size: 48
     repeat: 2
   test:
     name: Set5
-    data_location: data/datasets/Set5/
+    data_location: data/datasets/Set14/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1
@@ -74,4 +74,4 @@ logger:
   path: experiments/
   
 path:
-  pretrain_model_G: trained_models/1000_SRCNN_x2_netG.pth
+  pretrain_model_G: trained_models/1000_SRResNet_x2_netG.pth

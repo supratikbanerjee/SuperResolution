@@ -1,5 +1,5 @@
 #### general settings
-name: 0001_SPBP
+name: _0001_SPBP
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -9,13 +9,13 @@ device: cuda:1
 #### datasets
 dataset:
   read: ram # disk
-  scale: 4
+  scale: 2
   train:
     name: DIV2K
     data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 0  # per GPU
-    batch_size: 10
+    batch_size: 16
     lr_size: 48
     repeat: 2
   test:

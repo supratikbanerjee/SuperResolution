@@ -24,8 +24,7 @@ class GAN():
 			# define model
 			self.netD = networks.define_D(self.config).to(self.device)
 			self.netF = networks.define_F(self.config).to(self.device)
-			if self.dual_D:
-				self.netFD = networks.define_D({'network_D':{'model':'fdiscriminator_vgg_128'}}).to(self.device)
+			
 
 			self.pixel_criterion = networks.loss_criterion(self.train_config['pixel_criterion']).to(self.device)
 			self.adversarial_criterion = networks.loss_criterion(self.train_config['adversarial_criterion']).to(self.device)
@@ -62,6 +61,26 @@ class GAN():
 				self.scheduler_D = torch.optim.lr_scheduler.MultiStepLR(self.optimizer_D, 
 					self.train_config['lr_step'], 
 					self.train_config['lr_gamma'])
+
+			if self.dual_D:
+				self.netFD = networks.define_D({'network_D':{'model':'fdiscriminator_vgg_128'}}).to(self.device)
+				
+
+				if self.train_config['adversarial_criterion'] == 'ADAPTIVE':
+					paramsFD = list(self.netFD.parameters()) + list(self.pixel_criterion.parameters())
+				else:
+					paramsFD = self.netFD.parameters()
+
+				# Need to add optimizer parameters in YAML config file for 2nd Discriminator
+
+				self.optimizer_FD = torch.optim.Adam(paramsFD, lr=self.train_config['lr_D'],
+	                                                weight_decay=self.train_config['weight_decay_D'],
+	                                                betas=(self.train_config['beta1_D'], self.train_config['beta2_D']))
+
+				if self.train_config['lr_scheme'] == 'MultiStepLR':
+					self.scheduler_FD = torch.optim.lr_scheduler.MultiStepLR(self.optimizer_D, 
+						self.train_config['lr_step'], 
+						self.train_config['lr_gamma'])
 			self.load()
 		else:
 			self.load()
@@ -185,6 +204,8 @@ class GAN():
 		self.logs['totalD'] = total.item()
 		total.backward()
 		self.optimizer_D.step()
+		if self.dual_D:
+			self.optimizer_FD.step()
 		#return total_loss_d.item()
 
 	def train(self, batch):
@@ -271,3 +292,5 @@ class GAN():
 	def update_learning_rate(self, epoch):
 		self.scheduler_G.step(epoch)
 		self.scheduler_D.step(epoch)
+		if self.dual_D:
+			self.scheduler_D.step(epoch)

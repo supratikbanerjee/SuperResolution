@@ -15,7 +15,7 @@ dataset:
     data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 0  # per GPU
-    batch_size: 16
+    batch_size: 32
     lr_size: 48
     repeat: 2
   test:
@@ -45,7 +45,7 @@ train:
   beta2_G: 0.99
 
   lr_scheme: MultiStepLR
-  lr_step: [200, 400, 600, 800]
+  lr_step: [1000]
   lr_gamma: 0.5
 
   pixel_criterion: l1

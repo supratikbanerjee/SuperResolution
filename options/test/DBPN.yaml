@@ -1,7 +1,7 @@
 name: _0001_x2_DBPN
 is_train: false
 model: cnn
-device: cuda:0
+device: cuda:1
 
 dataset:
   read: ram # disk
@@ -51,13 +51,14 @@ dataset:
 
 #### network structures
 network_G:
-  model: DBPNS
-  num_features: 64
+  model: DBPN
+  num_features: 256 #DBPN
   in_channels: 3
-  out_channels: 3
+  out_channels: 64 #DBPN
   num_blocks: 7
+
 
 #### path
 path:
   experiments: trained_models/experiments/
-  pretrain_model_G: trained_models/1000_DBPNS_x2_netG.pth
+  pretrain_model_G: trained_models/1000_DBPN_x2_netG.pth

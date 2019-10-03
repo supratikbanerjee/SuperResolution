@@ -1,11 +1,11 @@
-name: _0001_x2_SPBP
+name: _0001_x4_SPBP
 is_train: false
 model: cnn
-device: cuda:0
+device: cuda:1
 
 dataset:
   read: ram # disk
-  scale: 2
+  scale: 4
   test_1:
     name: Set5
     data_location: data/datasets/Set5/
@@ -61,4 +61,4 @@ network_G:
 #### path
 path:
   experiments: trained_models/experiments/
-  pretrain_model_G: trained_models/1000_SPBP_x2_netG.pth
+  pretrain_model_G: trained_models/1000_SPBP_x4_netG.pth

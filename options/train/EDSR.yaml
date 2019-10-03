@@ -19,8 +19,8 @@ dataset:
     lr_size: 48
     repeat: 2
   test:
-    name: Set5
-    data_location: data/datasets/Set5/
+    name: Set14
+    data_location: data/datasets/Set14/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1

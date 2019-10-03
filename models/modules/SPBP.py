@@ -64,7 +64,7 @@ class SubPixelBackProjection(nn.Module):
 
         #self.ca = CALayer(num_features)
 
-        self.compress_out = ConvBlock(num_groups*num_features, num_features,
+        self.compress_out = ConvBlock(num_groups*num_features, 4*num_features,
                                       kernel_size=1,
                                       act_type=act_type, norm_type=norm_type)
 
@@ -122,10 +122,10 @@ class SPBP(nn.Module):
         self.sub_mean = MeanShift(rgb_mean, rgb_std)
 
         # LR feature extraction block
-        self.conv_in = ConvBlock(in_channels, 4*num_features,
+        self.conv_in = ConvBlock(in_channels, 3*num_features,
                                  kernel_size=3,
                                  act_type=act_type, norm_type=norm_type)
-        self.feat_in = ConvBlock(4*num_features, num_features,
+        self.feat_in = ConvBlock(3*num_features, num_features,
                                  kernel_size=1,
                                  act_type=act_type, norm_type=norm_type)
 
@@ -138,7 +138,7 @@ class SPBP(nn.Module):
         #                       kernel_size=kernel_size, stride=stride, padding=padding,
         #                       act_type='prelu', norm_type=norm_type)
         self.prelu = nn.PReLU(num_parameters=1, init=0.2)
-        self.conv4 = nn.Conv2d(num_features, num_features * (upscale_factor ** 2), kernel_size=3, stride=1, padding=1)
+        self.conv4 = nn.Conv2d(4*num_features, num_features * (upscale_factor ** 2), kernel_size=3, stride=1, padding=1)
         self.pixel_shuffle = nn.PixelShuffle(upscale_factor)
         self.conv_out = ConvBlock(num_features, out_channels,
                                   kernel_size=3,

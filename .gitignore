@@ -4,6 +4,7 @@ experiments/
 models/__pycache__/
 models/modules/__pycache__/
 trained_models/experiments/
+trained_models/big_models/
 .ipynb_checkpoints
 
 # Compiled source #

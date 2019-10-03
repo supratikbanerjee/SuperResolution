@@ -1,6 +1,7 @@
 #### general settings
-name: _0001_SPBPGAN_smallG
+name: _0001_SPBPGAN
 is_train: true
+dual_D: true
 use_visdom: false
 visdom_port: 8067
 model: gan
@@ -15,7 +16,7 @@ dataset:
     data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 1  # per GPU
-    batch_size: 32
+    batch_size: 10
     lr_size: 64
     repeat: 2
   test:
@@ -29,11 +30,11 @@ dataset:
 #### network structures
 network_G:
   model: SPBP
-  num_features: 16
+  num_features: 64
   in_channels: 3
   out_channels: 3
   num_steps: 1
-  num_groups: 1
+  num_groups: 10
 
 network_D:
   model: discriminator_vgg_128

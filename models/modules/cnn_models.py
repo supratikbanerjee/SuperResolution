@@ -44,7 +44,7 @@ class FSRCNN(nn.Module):
         self.prelu3 = nn.PReLU(num_parameters=1, init=0.2)
         self.conv4 = nn.Conv2d(in_channels=12, out_channels=56, kernel_size=1, stride=1, padding=0)
         self.prelu4 = nn.PReLU(num_parameters=1, init=0.2)
-        self.deconv1 = nn.ConvTranspose2d(in_channels=56, out_channels=3, kernel_size=8, stride=upscale_factor, padding=3)
+        self.deconv1 = nn.ConvTranspose2d(in_channels=56, out_channels=3, kernel_size=8, stride=upscale_factor, padding=2)
 
         #self._initialize_weights()
 

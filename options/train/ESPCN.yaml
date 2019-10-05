@@ -1,10 +1,10 @@
 #### general settings
-name: _0001_ESPCN
+name: _0001_ESPCN_x2
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda:0
+device: cuda:1
 
 #### datasets
 dataset:

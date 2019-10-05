@@ -64,7 +64,7 @@ class SubPixelBackProjection(nn.Module):
 
         #self.ca = CALayer(num_features)
 
-        self.compress_out = ConvBlock(num_groups*num_features, 4*num_features,
+        self.compress_out = ConvBlock(num_groups*num_features, num_features,
                                       kernel_size=1,
                                       act_type=act_type, norm_type=norm_type)
 
@@ -122,24 +122,27 @@ class SPBP(nn.Module):
         self.sub_mean = MeanShift(rgb_mean, rgb_std)
 
         # LR feature extraction block
-        self.conv_in = ConvBlock(in_channels, 3*num_features,
+        self.conv_in = ConvBlock(in_channels, 4*num_features,
                                  kernel_size=3,
-                                 act_type=act_type, norm_type=norm_type)
-        self.feat_in = ConvBlock(3*num_features, num_features,
+                                 act_type=act_type, norm_type=norm_type, pa=True)
+        self.prelu1 = nn.PReLU(num_parameters=1, init=0.2)
+        self.feat_in = ConvBlock(4*num_features, num_features,
                                  kernel_size=1,
                                  act_type=act_type, norm_type=norm_type)
+        self.prelu2 = nn.PReLU(num_parameters=1, init=0.2)
 
         # Non-Linear block
         self.block = SubPixelBackProjection(num_features, num_groups, upscale_factor, act_type, norm_type)
-
+        self.prelu3 = nn.PReLU(num_parameters=1, init=0.2)
         # reconstruction block
-
         #self.out = DeconvBlock(num_features, num_features,
         #                       kernel_size=kernel_size, stride=stride, padding=padding,
         #                       act_type='prelu', norm_type=norm_type)
-        self.prelu = nn.PReLU(num_parameters=1, init=0.2)
-        self.conv4 = nn.Conv2d(4*num_features, num_features * (upscale_factor ** 2), kernel_size=3, stride=1, padding=1)
+
+        self.conv4 = nn.Conv2d(num_features, num_features * (upscale_factor ** 2), kernel_size=3, stride=1, padding=1)
         self.pixel_shuffle = nn.PixelShuffle(upscale_factor)
+        self.prelu = nn.PReLU(num_parameters=1, init=0.2)
+
         self.conv_out = ConvBlock(num_features, out_channels,
                                   kernel_size=3,
                                   act_type=None, norm_type=norm_type)
@@ -151,10 +154,14 @@ class SPBP(nn.Module):
 
         inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
 
-        x = self.conv_in(x)
+        x = self.conv_in(x, x)
+        x = self.prelu1(x)
         x = self.feat_in(x)
+        x = self.prelu2(x)
 
         h = self.block(x)
+        
+        h = self.prelu3(h)
         h = self.pixel_shuffle(self.conv4(h))
         h = self.prelu(h)
 

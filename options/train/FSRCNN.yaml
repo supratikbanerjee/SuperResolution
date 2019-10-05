@@ -1,5 +1,5 @@
 #### general settings
-name: _0001_FSRCNN
+name: _0001_FSRCNN_4x
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -9,10 +9,10 @@ device: cuda:0
 #### datasets
 dataset:
   read: ram # disk
-  scale: 2
+  scale: 4
   train:
     name: DIV2K
-    data_location: data/datasets/DIV2K/
+    data_location: data/datasets/BSDS100/
     shuffle: true
     n_workers: 1  # per GPU
     batch_size: 40

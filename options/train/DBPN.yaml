@@ -1,10 +1,10 @@
 #### general settings
-name: _0001_DBPN
+name: _0001_DBPN_x2
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda:1
+device: cuda:0
 
 #### datasets
 dataset:

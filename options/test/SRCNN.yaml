@@ -1,4 +1,4 @@
-name: _0001_x2_SRCNN_SP
+name: _0001_x2_SRCNN
 is_train: false
 model: cnn
 device: cuda:0
@@ -55,4 +55,4 @@ network_G:
 #### path
 path:
   experiments: trained_models/experiments/
-  pretrain_model_G: trained_models/1000_SRCNNSP_x2_netG.pth
+  pretrain_model_G: trained_models/1000_SRCNN_x2_netG.pth

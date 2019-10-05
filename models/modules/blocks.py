@@ -87,6 +87,7 @@ def ConvBlock(in_channels, out_channels, kernel_size, stride=1, dilation=1, bias
         n = norm(in_channels, norm_type) if norm_type else None
         return sequential(n, act, p, conv)
 
+
 class MeanShift(nn.Conv2d):
     def __init__(self, rgb_mean, rgb_std, sign=-1):
         super(MeanShift, self).__init__(3, 3, kernel_size=1)

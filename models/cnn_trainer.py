@@ -99,7 +99,7 @@ class CNN():
         chop for less memory consumption during test
         """
         n_GPUs = 1
-        scale = 2
+        scale = self.config['dataset']['scale']
         b, c, h, w = x.size()
         h_half, w_half = h // 2, w // 2
         h_size, w_size = h_half + shave, w_half + shave

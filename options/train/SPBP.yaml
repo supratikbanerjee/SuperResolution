@@ -1,5 +1,5 @@
 #### general settings
-name: _0001_SPBP_BIG_2x
+name: _0001_SPBP
 is_train: true
 use_visdom: false
 visdom_port: 8067
@@ -12,7 +12,7 @@ dataset:
   scale: 2
   train:
     name: DIV2K
-    data_location: data/datasets/BSDS100/
+    data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 0  # per GPU
     batch_size: 20

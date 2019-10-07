@@ -44,7 +44,7 @@ train:
   beta1_G: 0.9
   beta2_G: 0.99
 
-  lr_scheme: MultiStepLR
+  lr_scheme: None
   lr_step: [200, 400, 600, 800]
   lr_gamma: 0.5
 

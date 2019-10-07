@@ -124,7 +124,7 @@ class SPBP(nn.Module):
         # LR feature extraction block
         self.conv_in = ConvBlock(in_channels, 4*num_features,
                                  kernel_size=3,
-                                 act_type=act_type, norm_type=norm_type, pa=True)
+                                 act_type=act_type, norm_type=norm_type)
         self.prelu1 = nn.PReLU(num_parameters=1, init=0.2)
         self.feat_in = ConvBlock(4*num_features, num_features,
                                  kernel_size=1,
@@ -154,7 +154,7 @@ class SPBP(nn.Module):
 
         inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
 
-        x = self.conv_in(x, x)
+        x = self.conv_in(x)
         x = self.prelu1(x)
         x = self.feat_in(x)
         x = self.prelu2(x)

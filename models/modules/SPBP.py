@@ -49,7 +49,7 @@ class SubPixelBackProjection(nn.Module):
             #                                 kernel_size=kernel_size, stride=stride, padding=padding,
             #                                 act_type=act_type, norm_type=norm_type))
             self.upPac.append(ConvBlock(num_features, num_features * (upscale_factor ** 2),
-                                             kernel_size=3, stride=1, padding=1,valid_padding=False, pa=False))
+                                             kernel_size=4, stride=1, padding=1, act_type=None, valid_padding=False))
             self.upBlocks.append(nn.PixelShuffle(upscale_factor))
             self.downBlocks.append(ConvBlock(num_features, num_features,
                                              kernel_size=kernel_size, stride=stride, padding=padding,
@@ -73,6 +73,8 @@ class SubPixelBackProjection(nn.Module):
 
 
     def forward(self, x):
+        #res = x[1]
+        #x = x[0]
         # x = torch.cat((x, self.last_hidden), dim=1)
         #x = self.compress_in(x)
 
@@ -87,7 +89,8 @@ class SubPixelBackProjection(nn.Module):
                 LD_L = self.uptranBlocks[idx-1](LD_L)
             LD_L = self.upPac[idx](LD_L)
             LD_H = self.prelu(self.upBlocks[idx](LD_L))
-            
+            #LD_H = torch.add(res, LD_H)
+            #LD_H = self.upBlocks[idx](LD_L)
 
             hr_features.append(LD_H)
 
@@ -136,10 +139,10 @@ class SPBP(nn.Module):
         self.prelu3 = nn.PReLU(num_parameters=1, init=0.2)
         # reconstruction block
         #self.out = DeconvBlock(num_features, num_features,
-        #                       kernel_size=kernel_size, stride=stride, padding=padding,
+        #                       kernel_size=6, stride=2, padding=2,
         #                       act_type='prelu', norm_type=norm_type)
 
-        self.conv4 = nn.Conv2d(num_features, num_features * (upscale_factor ** 2), kernel_size=3, stride=1, padding=1)
+        self.conv4 = nn.Conv2d(num_features, num_features * (upscale_factor ** 2), kernel_size=4, stride=1, padding=2)
         self.pixel_shuffle = nn.PixelShuffle(upscale_factor)
         self.prelu = nn.PReLU(num_parameters=1, init=0.2)
 
@@ -159,10 +162,12 @@ class SPBP(nn.Module):
         x = self.feat_in(x)
         x = self.prelu2(x)
 
+        #h = self.block([x,inter_res])
         h = self.block(x)
-        
+    
         h = self.prelu3(h)
         h = self.pixel_shuffle(self.conv4(h))
+        #h = self.out(h)
         h = self.prelu(h)
 
         h = torch.add(inter_res, self.conv_out(h))

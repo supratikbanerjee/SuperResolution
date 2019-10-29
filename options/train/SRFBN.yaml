@@ -15,12 +15,12 @@ dataset:
     data_location: data/datasets/DIV2K/
     shuffle: true
     n_workers: 0  # per GPU
-    batch_size: 16
-    lr_size: 40
+    batch_size: 8
+    lr_size: 60
     repeat: 2
   test:
-    name: Set5
-    data_location: data/datasets/Set5/
+    name: Set14
+    data_location: data/datasets/Set14/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1

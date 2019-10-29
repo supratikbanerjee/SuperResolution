@@ -1,23 +1,23 @@
 #### general settings
-name: _0001_DBPN_x4
+name: _0002_DBPNSS_x2
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda:1
+device: cuda:0
 
 #### datasets
 dataset:
   read: ram # disk
-  scale: 4 
+  scale: 2
   train:
     name: DIV2K
     data_location: data/datasets/DIV2K/
     shuffle: true
-    n_workers: 0  # per GPU
+    n_workers: 1  # per GPU
     batch_size: 20
     lr_size: 32
-    repeat: 2
+    repeat: 1
   test:
     name: Set14
     data_location: data/datasets/Set14/
@@ -28,15 +28,15 @@ dataset:
     
 #### network structures
 network_G:
-  model: DBPN
-  num_features: 256 #DBPN
+  model: DBPNS
+  num_features: 64 #DBPN
   in_channels: 3
-  out_channels: 64 #DBPN
-  num_blocks: 7
+  out_channels: 18 #DBPN
+  num_blocks: 2
 
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 1
+  epoch: 1000
 
   cl_train: false
   lr_G: !!float 1e-4
@@ -51,7 +51,7 @@ train:
   pixel_criterion: l1
   pixel_weight: !!float 1e0
 
-  manual_seed: 10
+  manual_seed: 123
   val_freq: 5 # epoch
 
 #### logger

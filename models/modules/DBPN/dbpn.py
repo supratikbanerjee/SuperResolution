@@ -22,6 +22,8 @@ class Net(nn.Module):
         	kernel = 12
         	stride = 8
         	padding = 2
+            
+        self.upscale_factor = scale_factor
         
         #Initial Feature Extraction
         self.feat0 = ConvBlock(num_channels, feat, 3, 1, 1, activation='prelu', norm=None)
@@ -55,6 +57,7 @@ class Net(nn.Module):
         		    m.bias.data.zero_()
             
     def forward(self, x):
+        inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
         x = self.feat0(x)
         x = self.feat1(x)
         
@@ -94,5 +97,6 @@ class Net(nn.Module):
         
         concat_h = torch.cat((h, concat_h),1)
         x = self.output_conv(concat_h)
+        x = torch.add(inter_res, x)
         
         return x

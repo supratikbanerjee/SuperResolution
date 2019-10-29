@@ -1,10 +1,10 @@
 #### general settings
-name: _0001_SPBP
+name: _0003_SPBP_16_x2_sp_4x4
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda:1
+device: cuda:0
 
 #### datasets
 dataset:
@@ -29,11 +29,11 @@ dataset:
 #### network structures
 network_G:
   model: SPBP
-  num_features: 64
+  num_features: 16
   in_channels: 3
   out_channels: 3
   num_steps: 1
-  num_groups: 10
+  num_groups: 1
 
 #### training settings: learning rate scheme, loss
 train:
@@ -44,7 +44,7 @@ train:
   beta1_G: 0.9
   beta2_G: 0.99
 
-  lr_scheme: MultiStepLR
+  lr_scheme: None
   lr_step: [200, 400, 600, 800]
   lr_gamma: 0.5
 
@@ -57,7 +57,7 @@ train:
 #### logger
 logger:
   print_freq: 6 # epoch
-  chkpt_freq: 100 # epoch
+  chkpt_freq: 5 # epoch
   img_freq: 100 # epoch
   path: experiments/
   

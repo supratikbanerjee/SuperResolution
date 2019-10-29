@@ -1,11 +1,11 @@
-name: _0001_x4_SPBP_BIG
+name: _0001_x2_SPBP_16_2
 is_train: false
 model: cnn
 device: cuda:1
 
 dataset:
   read: ram # disk
-  scale: 4
+  scale: 2
   test_1:
     name: Set5
     data_location: data/datasets/Set5/
@@ -27,13 +27,6 @@ dataset:
     n_workers: 1  # per GPU
     batch_size: 1
     repeat: 1
-  test_4:  # the 2st test dataset
-    name: Urban100
-    data_location: data/datasets/Urban100/
-    shuffle: false
-    n_workers: 1  # per GPU
-    batch_size: 1
-    repeat: 1
   test_5:  # the 2st test dataset
     name: Manga109
     data_location: data/datasets/Manga109/
@@ -42,8 +35,8 @@ dataset:
     batch_size: 1
     repeat: 1
   test_6:  # the 2st test dataset
-    name: historical
-    data_location: data/datasets/historical/LR/
+    name: DIV2K
+    data_location: data/datasets/DIV2K_valid_HR/
     shuffle: false
     n_workers: 1  # per GPU
     batch_size: 1
@@ -52,13 +45,13 @@ dataset:
 #### network structures
 network_G:
   model: SPBP
-  num_features: 64
+  num_features: 16
   in_channels: 3
   out_channels: 3
   num_steps: 1
-  num_groups: 10
+  num_groups: 1
 
 #### path
 path:
   experiments: trained_models/experiments/
-  pretrain_model_G: trained_models/1000_SPBP_x4_netG.pth
+  pretrain_model_G: trained_models/980_SPBP_x2_netG.pth

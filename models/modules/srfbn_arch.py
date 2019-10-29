@@ -1,17 +1,14 @@
-# https://github.com/Paper99/SRFBN_CVPR19/blob/master/networks/srfbn_arch.py
-
 import torch
 import torch.nn as nn
-from .blocks import ConvBlock, DeconvBlock, MeanShift
-
+from .blocks_fbn import ConvBlock, DeconvBlock, MeanShift
 
 class FeedbackBlock(nn.Module):
     def __init__(self, num_features, num_groups, upscale_factor, act_type, norm_type):
         super(FeedbackBlock, self).__init__()
         if upscale_factor == 2:
             stride = 2
-            padding = 0
-            kernel_size = 2
+            padding = 2
+            kernel_size = 6
         elif upscale_factor == 3:
             stride = 3
             padding = 2
@@ -139,7 +136,7 @@ class SRFBN(nn.Module):
         self.block = FeedbackBlock(num_features, num_groups, upscale_factor, act_type, norm_type)
 
         # reconstruction block
-        # uncomment for pytorch 0.4.0
+		# uncomment for pytorch 0.4.0
         # self.upsample = nn.Upsample(scale_factor=upscale_factor, mode='bilinear')
 
         self.out = DeconvBlock(num_features, num_features,
@@ -149,17 +146,16 @@ class SRFBN(nn.Module):
                                   kernel_size=3,
                                   act_type=None, norm_type=norm_type)
 
-        
         self.add_mean = MeanShift(rgb_mean, rgb_std, 1)
 
     def forward(self, x):
         self._reset_state()
 
         x = self.sub_mean(x)
-        # uncomment for pytorch 0.4.0
+		# uncomment for pytorch 0.4.0
         # inter_res = self.upsample(x)
-        
-        # comment for pytorch 0.4.0
+		
+		# comment for pytorch 0.4.0
         inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bilinear', align_corners=False)
 
         x = self.conv_in(x)

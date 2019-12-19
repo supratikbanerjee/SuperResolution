@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from collections import OrderedDict
 import sys
-from models import pac
+#from models import pac
 
 ################
 # Basic blocks
@@ -73,10 +73,10 @@ def ConvBlock(in_channels, out_channels, kernel_size, stride=1, dilation=1, bias
     else:
         pass
     p = pad(pad_type, padding) if pad_type and pad_type != 'zero' else None
-    if pa:
-        conv = pac.PacConv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
-    else:
-        conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
+    #if pa:
+    #    conv = pac.PacConv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
+    #else:
+    conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=stride, padding=padding, dilation=dilation, bias=bias)
 
     if mode == 'CNA':
         act = activation(act_type) if act_type else None

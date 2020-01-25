@@ -90,7 +90,6 @@ class SubPixelBackProjection(nn.Module):
             LD_L = self.upPac[idx](LD_L)
             LD_H = self.prelu(self.upBlocks[idx](LD_L))
             #LD_H = torch.add(res, LD_H)
-            #LD_H = self.upBlocks[idx](LD_L)
 
             hr_features.append(LD_H)
 
@@ -154,7 +153,6 @@ class SPBP(nn.Module):
         
     def forward(self, x):
         x = self.sub_mean(x)
-
         inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
 
         x = self.conv_in(x)
@@ -173,3 +171,14 @@ class SPBP(nn.Module):
         h = torch.add(inter_res, self.conv_out(h))
         h = self.add_mean(h)
         return h
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.orthogonal_(m.weight)
+                #print('init weight')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)

@@ -1,4 +1,5 @@
 # Don't track content of these folders
+data/dataset_matlab_SR/
 data/datasets/
 experiments/
 models/__pycache__/

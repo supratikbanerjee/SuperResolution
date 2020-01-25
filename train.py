@@ -22,7 +22,7 @@ def main(config):
 	##### Setup Dirs #####
 	experiment_dir = config['logger']['path'] + config['name']
 	util.mkdir_and_rename(
-                experiment_dir)  # rename experiment folder if exists
+				experiment_dir)  # rename experiment folder if exists
 	util.mkdirs((experiment_dir+'/val_image', experiment_dir+'/checkpoint'))
 
 	##### Setup Logger #####
@@ -98,7 +98,7 @@ def main(config):
 			iter_start_time = time.time()
 
 
-        ##### Start Validation #####
+		##### Start Validation #####
 		if epoch % val_freq == 0:
 			#logger_val = logging.getLogger('val')
 			logger_val.log('Start validation at epoch: {:d}, iter: {:d}'.format(epoch, total_steps))
@@ -121,7 +121,7 @@ def main(config):
 					save_img_path = os.path.join(img_dir, '{:d}_{:s}_{:d}.png'.format(epoch, img_name, total_steps))
 					util.save_img(sr_img, save_img_path)
 				crop_size = config['dataset']['scale']
-				psnr, ssim = util.eval_psnr_and_ssim(sr_img, gt_img, crop_size) 
+				psnr, ssim = util.calc_metrics(sr_img, gt_img, crop_size) 
 				avg_psnr += psnr
 				avg_ssim += ssim
 				logger_val.log('[ Inference ] - name:{}, dim:{}, time:{:.8f}, psnr: {:.4f}, ssim {:.4f}'.format(img_name, gt_img.shape[:2], inf_time, psnr, ssim))
@@ -135,11 +135,11 @@ def main(config):
 				visualizer.plot(ssim_result, epoch, 'ssim_eval', 'ssim')
 				trainer.plot_loss(visualizer, epoch)
 			logger_val.log('[ Test ] - epoch:{}, iter:{}, time:{:.3f}, psnr: {:.4f}, ssim {:.4f}'.format(
-                    epoch, total_steps, valid_t, avg_psnr, avg_ssim))
+					epoch, total_steps, valid_t, avg_psnr, avg_ssim))
 			trainer.update_eval(avg_psnr, avg_ssim, epoch)
 			best_eval = trainer.get_eval()
 			logger_val.log('[ Best ] - psnr_epoch:{}, psnr:{:.4f}, ssim_epoch:{}, ssim: {:.4f}'.format(
-                    best_eval['psnr_epoch'], best_eval['psnr'], best_eval['ssim_epoch'], best_eval['ssim']))
+					best_eval['psnr_epoch'], best_eval['psnr'], best_eval['ssim_epoch'], best_eval['ssim']))
 			iter_start_time = time.time()
 		
 		if epoch % config['logger']['chkpt_freq'] == 0:
@@ -155,5 +155,5 @@ if __name__ == '__main__':
 	parser.add_argument('-config', type=str, help='Path to config YAML file.')
 	args = parser.parse_args()
 	with open(args.config, 'r') as stream:
-	    config = yaml.safe_load(stream)
+		config = yaml.safe_load(stream)
 	main(config)

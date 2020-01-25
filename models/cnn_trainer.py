@@ -14,7 +14,7 @@ class CNN():
         self.eval = {'psnr':0.0, 'ssim':0.0, 'ssim_epoch':0, 'psnr_epoch':0}
         self.config = config
         self.device = self.config['device']
-        self.use_chop = True  # CHANGE THIS TO CONFIG FILE
+        self.use_chop = False  # CHANGE THIS TO CONFIG FILE
         
 
         # define model

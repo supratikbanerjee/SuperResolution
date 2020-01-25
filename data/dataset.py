@@ -40,7 +40,8 @@ class Dataset(data.Dataset):
 		if self.phase == 'train':
 			crop_size = self.config[self.phase]['lr_size']
 			LR, HR = get_patch(LR, HR, crop_size, self.upscale_factor)
-
+			LR, HR = augment([LR, HR])
+			
 		LR = img2tensor(LR, 255) 
 		HR = img2tensor(HR, 255)
 		return LR, HR, path
@@ -71,23 +72,38 @@ def img2tensor(img, rgb_range):
 	return tensor
 
 def get_patch(img_in, img_tar, patch_size, scale):
-    ih, iw = img_in.size[:2]
-    oh, ow = img_tar.size[:2]
-    ip = patch_size
-    tp = ip * scale
-    ix = random.randrange(0, iw - ip + 1)
-    iy = random.randrange(0, ih - ip + 1)
-    tx, ty = scale * ix, scale * iy
-    img_in = img_in.crop((iy,ix,iy + ip, ix + ip))
-    img_tar = img_tar.crop((ty,tx,ty + tp, tx + tp))
-    return img_in, img_tar
+	ih, iw = img_in.size[:2]
+	oh, ow = img_tar.size[:2]
+	ip = patch_size
+	tp = ip * scale
+	ix = random.randrange(0, iw - ip + 1)
+	iy = random.randrange(0, ih - ip + 1)
+	tx, ty = scale * ix, scale * iy
+	img_in = img_in.crop((iy,ix,iy + ip, ix + ip))
+	img_tar = img_tar.crop((ty,tx,ty + tp, tx + tp))
+	return img_in, img_tar
+
+
+def augment(imgs, hflip=True, rot=True):
+	# horizontal flip OR rotate
+	im_list = []
+	hflip = hflip and random.random() < 0.5
+	vflip = rot and random.random() < 0.5
+	rot90 = rot and random.random() < 0.5
+	for img in imgs:
+		img = np.array(img)
+		if hflip: img = img[:, ::-1, :]
+		if vflip: img = img[::-1, :, :]
+		if rot90: img = img.transpose(1, 0, 2)
+		im_list.append(img)
+	return im_list
 
 def mod_crop(im, scale):
-    h, w = im.size[:2]
-    return im.crop((0,0,h - (h % scale), w - (w % scale)))
+	h, w = im.size[:2]
+	return im.crop((0,0,h - (h % scale), w - (w % scale)))
 
 def is_image(filename):
-    return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
+	return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
 def load_image(path):
 	img = Image.open(path).convert('RGB')

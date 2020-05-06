@@ -58,7 +58,8 @@ class CNN():
         return torch.empty_like(input).fill_(target)
 
     def train(self, batch):
-        self.lr_input, self.hr_real = Variable(batch[0].to(self.device)), Variable(batch[1].to(self.device))
+
+        self.lr_input, self.hr_real = [Variable(j).to(self.device) for j in batch[0]], Variable(batch[1].to(self.device))
         self.netG.train()
         self.netG.zero_grad()
         self.hr_fake = self.netG(self.lr_input)
@@ -79,7 +80,7 @@ class CNN():
 
     def test(self, batch):
         self.netG.eval()
-        self.lr_input, self.hr_real = Variable(batch[0].to(self.device)), Variable(batch[1].to(self.device))
+        self.lr_input, self.hr_real = [Variable(j).to(self.device) for j in batch[0]], Variable(batch[1].to(self.device))
         with torch.no_grad():
             model = self._overlap_crop_forward if self.use_chop else self.netG.forward
             infer_time_start = time.time()
@@ -181,7 +182,7 @@ class CNN():
         
     def get_current_visuals(self):
         visuals = OrderedDict()
-        visuals['LR'] = self.lr_input.detach()[0].float().cpu()
+        visuals['LR'] = self.lr_input[-1].detach()[0].float().cpu()
         visuals['SR'] = self.hr_fake.detach()[0].float().cpu()
         visuals['HR'] = self.hr_real.detach()[0].float().cpu()
         return visuals

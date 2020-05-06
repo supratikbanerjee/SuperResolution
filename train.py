@@ -6,7 +6,7 @@ import torch
 import yaml
 
 import util
-from data import dataset
+from data import vdataset as dataset
 from models import create_model
 from tqdm import tqdm
 
@@ -110,7 +110,7 @@ def main(config):
 				idx += 1
 				img_name = batch[2][0][batch[2][0].rindex('/')+1:]
 				# print(img_name)
-				img_name = img_name[:img_name.index('.')]
+				# img_name = img_name[:img_name.index('.')]
 				img_dir = experiment_dir+'/val_image/'+img_name
 				util.mkdir(img_dir)
 				inf_time = trainer.test(batch)                

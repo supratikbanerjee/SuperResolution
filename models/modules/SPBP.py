@@ -124,7 +124,7 @@ class SPBP(nn.Module):
         self.sub_mean = MeanShift(rgb_mean, rgb_std)
 
         # LR feature extraction block
-        self.conv_in = ConvBlock(in_channels, 4*num_features,
+        self.conv_in = ConvBlock(in_channels*3, 4*num_features,
                                  kernel_size=3,
                                  act_type=act_type, norm_type=norm_type)
         self.prelu1 = nn.PReLU(num_parameters=1, init=0.2)
@@ -150,10 +150,13 @@ class SPBP(nn.Module):
                                   act_type=None, norm_type=norm_type)
         self.add_mean = MeanShift(rgb_mean, rgb_std, 1)
 
-        
+    
     def forward(self, x):
-        x = self.sub_mean(x)
-        inter_res = nn.functional.interpolate(x, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
+        #print(x[0].shape, x[1].shape)
+        y = x[2]
+        x = torch.cat([x[0], x[1], x[2]], 1)
+        #x = self.sub_mean(x)
+        inter_res = nn.functional.interpolate(y, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
 
         x = self.conv_in(x)
         x = self.prelu1(x)
@@ -169,7 +172,7 @@ class SPBP(nn.Module):
         h = self.prelu(h)
 
         h = torch.add(inter_res, self.conv_out(h))
-        h = self.add_mean(h)
+        #h = self.add_mean(h)
         return h
 
     def _initialize_weights(self):

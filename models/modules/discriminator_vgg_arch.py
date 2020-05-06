@@ -33,7 +33,7 @@ class Discriminator_VGG_128(nn.Module):
         self.conv4_1 = nn.Conv2d(nf * 8, nf * 8, 4, 2, 1, bias=False)
         self.bn4_1 = nn.BatchNorm2d(nf * 8, affine=True)
 
-        self.linear1 = nn.Linear(512 * 4 * 4, 100)
+        self.linear1 = nn.Linear(512 * 8 * 8, 100)
         self.linear2 = nn.Linear(100, 1)
 
         # activation function
@@ -88,14 +88,14 @@ class FDiscriminator_VGG_128(nn.Module):
         self.conv4_1 = nn.Conv2d(nf * 8, nf * 8, 4, 2, 1, bias=False)
         self.bn4_1 = nn.BatchNorm2d(nf * 8, affine=True)
 
-        self.linear1 = nn.Linear(512, 100)
+        self.linear1 = nn.Linear(512 * 2 * 2, 100)
         self.linear2 = nn.Linear(100, 1)
 
         # activation function
         self.lrelu = nn.LeakyReLU(negative_slope=0.2, inplace=True)
 
     def forward(self, x):
-        #print(x.size())
+        
         fea = self.lrelu(self.conv0_0(x))
         fea = self.lrelu(self.bn0_1(self.conv0_1(fea)))
 

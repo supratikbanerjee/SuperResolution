@@ -10,13 +10,13 @@ device: cuda:0
 #### datasets
 dataset:
   read: ram # disk
-  scale: 2
+  scale: 4
   train:
     name: DIV2K
     data_location: data/datasets/BSDS100/
     shuffle: true
     n_workers: 1  # per GPU
-    batch_size: 10
+    batch_size: 2
     lr_size: 64
     repeat: 2
   test:
@@ -30,11 +30,11 @@ dataset:
 #### network structures
 network_G:
   model: SPBP
-  num_features: 64
+  num_features: 16
   in_channels: 3
   out_channels: 3
   num_steps: 1
-  num_groups: 10
+  num_groups: 1
 
 network_D:
   model: discriminator_vgg_128
@@ -43,7 +43,7 @@ network_D:
 
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 1000
+  epoch: 1
 
   cl_train: false
   lr_G: !!float 1e-4

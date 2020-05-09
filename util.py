@@ -243,7 +243,7 @@ def calc_metrics(img1, img2, crop_border, test_Y=True):
     #
     img1 = img1 / 255.
     img2 = img2 / 255.
-
+    
     if test_Y and img1.shape[2] == 3:  # evaluate on Y channel in YCbCr color space
         im1_in = m_rgb2ycbcr(img1)
         im2_in = m_rgb2ycbcr(img2)
@@ -280,6 +280,7 @@ def ssim(img1, img2):
 
     C1 = (0.01 * 255)**2
     C2 = (0.03 * 255)**2
+    # import pdb; pdb.set_trace()
 
     img1 = img1.astype(np.float64)
     img2 = img2.astype(np.float64)
@@ -306,6 +307,7 @@ def calc_ssim(img1, img2):
     the same outputs as MATLAB's
     img1, img2: [0, 255]
     '''
+
     if not img1.shape == img2.shape:
         raise ValueError('Input images must have the same dimensions.')
     if img1.ndim == 2:

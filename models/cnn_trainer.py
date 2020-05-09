@@ -15,10 +15,14 @@ class CNN():
         self.config = config
         self.device = self.config['device']
         self.use_chop = False  # CHANGE THIS TO CONFIG FILE
-        
+        self.use_multi_gpu = self.config['use_multi_gpu']
+
 
         # define model
         self.netG = networks.define_G(self.config).to(self.device)
+        if self.use_multi_gpu:
+            self.netG = torch.nn.DataParallel(self.netG)
+
         print(self.netG)
 
         if self.config['is_train']:

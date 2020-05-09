@@ -15,6 +15,7 @@ import models.modules.SPBP as SPBP
 import models.modules.VDSR as VDSR
 import models.modules.EDSR as EDSR
 import models.modules.ESPCN as ESPCN
+import torch.nn.parallel
 
 from models import ar_loss
 

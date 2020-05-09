@@ -1,28 +1,28 @@
 #### general settings
-name: _0001_SPBP_16_x2_48
+name: _0001_SPBP_16_x4_48
 is_train: true
 use_visdom: false
 visdom_port: 8067
 model: cnn
-device: cuda:0
-
+device: cuda
+use_multi_gpu: true
 #### datasets
 dataset:
   read: ram # disk
-  scale: 4
+  scale: 2
   train:
     name: DIV2K
-    data_location: data/datasets/vimeo/sequences/
+    data_location: ../../datasets/srv/vimeo_triplet/sequences/
     shuffle: true
-    n_workers: 0  # per GPU
-    batch_size: 5
+    n_workers: 4  # per GPU
+    batch_size: 128
     lr_size: 48
     repeat: 1
   test:
     name: Set14
-    data_location: data/datasets/vimeo/sequences/
+    data_location: ../../datasets/srv/vimeo_triplet/sequences/
     shuffle: false
-    n_workers: 1  # per GPU
+    n_workers: 4  # per GPU
     batch_size: 1
     repeat: 1
 
@@ -37,7 +37,7 @@ network_G:
 
 #### training settings: learning rate scheme, loss
 train:
-  epoch: 10
+  epoch: 1000
   cl_train: false
   lr_G: !!float 1e-4
   weight_decay_G: 0
@@ -52,7 +52,7 @@ train:
   pixel_weight: !!float 1e0
 
   manual_seed: 10
-  val_freq: 5 # epoch
+  val_freq: 1 # epoch
 
 #### logger
 logger:

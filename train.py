@@ -120,8 +120,11 @@ def main(config):
 				if epoch % config['logger']['img_freq'] == 0:
 					save_img_path = os.path.join(img_dir, '{:d}_{:s}_{:d}.png'.format(epoch, img_name, total_steps))
 					util.save_img(sr_img, save_img_path)
+				
 				crop_size = config['dataset']['scale']
+
 				psnr, ssim = util.calc_metrics(sr_img, gt_img, crop_size) 
+
 				avg_psnr += psnr
 				avg_ssim += ssim
 				logger_val.log('[ Inference ] - name:{}, dim:{}, time:{:.8f}, psnr: {:.4f}, ssim {:.4f}'.format(img_name, gt_img.shape[:2], inf_time, psnr, ssim))

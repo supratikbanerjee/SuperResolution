@@ -9,13 +9,13 @@ device: cuda:0
 #### datasets
 dataset:
   read: ram # disk
-  scale: 4
+  scale: 2
   train:
     name: DIV2K
     data_location: data/datasets/vimeo/sequences/
     shuffle: true
-    n_workers: 0  # per GPU
-    batch_size: 5
+    n_workers: 1  # per GPU
+    batch_size: 30
     lr_size: 48
     repeat: 1
   test:

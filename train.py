@@ -108,7 +108,9 @@ def main(config):
 			idx = 0
 			for i, batch in enumerate(testing_data_loader):
 				idx += 1
-				img_name = batch[2][0][batch[2][0].rindex('/')+1:]
+
+				img_name = batch[2][0]
+				img_name = img_name[img_name[:img_name.rfind('/')].rfind('/')+1:].replace('/','_')
 				# print(img_name)
 				# img_name = img_name[:img_name.index('.')]
 				img_dir = experiment_dir+'/val_image/'+img_name

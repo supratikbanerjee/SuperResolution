@@ -153,7 +153,7 @@ class SPBP(nn.Module):
     
     def forward(self, x):
         #print(x[0].shape, x[1].shape)
-        y = x[2]
+        y = x[0]
         x = torch.cat([x[0], x[1], x[2]], 1)
         #x = self.sub_mean(x)
         inter_res = nn.functional.interpolate(y, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
@@ -172,7 +172,7 @@ class SPBP(nn.Module):
         h = self.prelu(h)
 
         h = torch.add(inter_res, self.conv_out(h))
-        #h = self.add_mean(h)
+        # h = self.add_mean(h)
         return h
 
     def _initialize_weights(self):

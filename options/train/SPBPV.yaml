@@ -15,7 +15,7 @@ dataset:
     data_location: ../../datasets/srv/vimeo_triplet/sequences/
     shuffle: true
     n_workers: 4  # per GPU
-    batch_size: 128
+    batch_size: 16
     lr_size: 48
     repeat: 1
   test:
@@ -52,7 +52,7 @@ train:
   pixel_weight: !!float 1e0
 
   manual_seed: 10
-  val_freq: 1 # epoch
+  val_freq: 50 # epoch
 
 #### logger
 logger:

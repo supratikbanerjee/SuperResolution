@@ -84,19 +84,22 @@ def im2tensor(img, rgb_range):
 	return tensor
 
 def get_patch(img_in, img_tar, patch_size, scale):
+    (ih, iw) = img_in[0].size
+    (th, tw) = (scale * ih, scale * iw)
 
-	ih, iw = img_in[0].size[:2]
-	oh, ow = img_tar.size[:2]
-	ip = patch_size
-	tp = ip * scale
-	ix = random.randrange(0, iw - ip + 1)
-	iy = random.randrange(0, ih - ip + 1)
-	tx, ty = scale * ix, scale * iy
-	img_tar = img_tar.crop((ty,tx,ty + tp, tx + tp))
-	for i in range(len(img_in)):
-		img_in[i] = img_in[i].crop((iy,ix,iy + ip, ix + ip))
+    patch_mult = scale #if len(scale) > 1 else 1
+    tp = patch_mult * patch_size
+    ip = tp // scale
 
-	return img_in, img_tar
+    ix = random.randrange(0, iw - ip + 1)
+    iy = random.randrange(0, ih - ip + 1)
+
+    (tx, ty) = (scale * ix, scale * iy)
+
+    img_tar = img_tar.crop((ty,tx,ty + tp, tx + tp))
+    img_in = [j.crop((iy,ix,iy + ip, ix + ip)) for j in img_in]
+
+    return img_in, img_tar
 
 
 def augment(imgs, hflip=True, rot=True):
@@ -125,12 +128,12 @@ def load_img(filepath, nFrames, scale):
     target = mod_crop(Image.open(os.path.join(filepath,'im'+str(nFrames)+'.png')).convert('RGB'), scale)
     input = target.resize((int(target.size[0]/scale),int(target.size[1]/scale)), Image.BICUBIC)
     frames = [mod_crop(Image.open(os.path.join(filepath,'im'+str(j)+'.png')).convert('RGB'), scale).resize((int(target.size[0]/scale),int(target.size[1]/scale)), Image.BICUBIC) for j in reversed(seq)]
-    frames.append(input)
+    frames.insert(0, input)
     return target, frames
 
 def get_train_set(config):
 
-	train_set = Dataset(config, 'train')
+	train_set = Dataset(config, 'train') #'train')
 	return data.DataLoader(dataset=train_set, batch_size=config['train']['batch_size'], shuffle=config['train']['shuffle'], pin_memory=True)
 	
 def get_test_set(config):

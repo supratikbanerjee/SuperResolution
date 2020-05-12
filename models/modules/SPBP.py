@@ -123,6 +123,8 @@ class SPBP(nn.Module):
         rgb_std = (1.0, 1.0, 1.0)
         self.sub_mean = MeanShift(rgb_mean, rgb_std)
 
+        self.conv_1x1_in = nn.Conv2d(in_channels, in_channels, 1, 1, bias=True)
+
         # LR feature extraction block
         self.conv_in = ConvBlock(in_channels*3, 4*num_features,
                                  kernel_size=3,
@@ -153,8 +155,9 @@ class SPBP(nn.Module):
     
     def forward(self, x):
         #print(x[0].shape, x[1].shape)
-        y = x[0]
-        x = torch.cat([x[0], x[1], x[2]], 1)
+        y = x[1]
+
+        x = torch.cat([self.conv_1x1_in(x[0]), self.conv_1x1_in(x[1]), self.conv_1x1_in(x[2])], 1)
         #x = self.sub_mean(x)
         inter_res = nn.functional.interpolate(y, scale_factor=self.upscale_factor, mode='bicubic', align_corners=False)
 

@@ -125,7 +125,8 @@ def is_image(filename):
 
 def load_img(filepath, nFrames, scale):
     seq = [i for i in range(1, nFrames)]
-    target = mod_crop(Image.open(os.path.join(filepath,'im'+str(nFrames)+'.png')).convert('RGB'), scale)
+    target = mod_crop(Image.open(os.path.join(filepath,'im2.png')).convert('RGB'), scale)
+    # target = mod_crop(Image.open(os.path.join(filepath,'im'+str(nFrames)+'.png')).convert('RGB'), scale)
     input = target.resize((int(target.size[0]/scale),int(target.size[1]/scale)), Image.BICUBIC)
     frames = [mod_crop(Image.open(os.path.join(filepath,'im'+str(j)+'.png')).convert('RGB'), scale).resize((int(target.size[0]/scale),int(target.size[1]/scale)), Image.BICUBIC) for j in reversed(seq)]
     frames.insert(0, input)

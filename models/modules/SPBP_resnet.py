@@ -34,80 +34,39 @@ class SubPixelBackProjection(nn.Module):
 
         self.num_groups = num_groups
 
-        #self.compress_in = ConvBlock(num_features, num_features,
-        #                             kernel_size=1,
-        #                             act_type=act_type, norm_type=norm_type)
-
         self.upBlocks = nn.ModuleList()
-        self.upPac = nn.ModuleList()
+        self.upConv = nn.ModuleList()
         self.downBlocks = nn.ModuleList()
-        self.uptranBlocks = nn.ModuleList()
-        self.downtranBlocks = nn.ModuleList()
 
         for idx in range(self.num_groups):
             #self.upBlocks.append(DeconvBlock(num_features, num_features,
             #                                 kernel_size=kernel_size, stride=stride, padding=padding,
             #                                 act_type=act_type, norm_type=norm_type))
-            self.upPac.append(ConvBlock(num_features, num_features * (upscale_factor ** 2),
+            self.upConv.append(ConvBlock(num_features, num_features * (upscale_factor ** 2),
                                              kernel_size=3, stride=1, padding=1, act_type=None, valid_padding=False))
             self.upBlocks.append(nn.PixelShuffle(upscale_factor))
             self.downBlocks.append(ConvBlock(num_features, num_features,
                                              kernel_size=kernel_size, stride=stride, padding=padding,
                                              act_type=act_type, norm_type=norm_type, valid_padding=False))
-            if idx > 0:
-                self.uptranBlocks.append(ConvBlock(num_features*(idx+1), num_features,
-                                                   kernel_size=1, stride=1,
-                                                   act_type=act_type, norm_type=norm_type))
-                self.downtranBlocks.append(ConvBlock(num_features*(idx+1), num_features,
-                                                     kernel_size=1, stride=1,
-                                                     act_type=act_type, norm_type=norm_type))
-
-        #self.ca = CALayer(num_features)
-
-        self.compress_out = ConvBlock(num_groups*num_features, num_features,
-                                      kernel_size=1,
-                                      act_type=act_type, norm_type=norm_type)
 
         self.prelu = nn.PReLU(num_parameters=1, init=0.2)
 
 
-
     def forward(self, x):
-        #res = x[1]
-        #x = x[0]
-        # x = torch.cat((x, self.last_hidden), dim=1)
-        #x = self.compress_in(x)
-
-        lr_features = []
-        hr_features = []
-        #print(x.shape)
-        lr_features.append(x)
+        LD_L = x
+        res_lr = LD_L
+        res_hr = 0
 
         for idx in range(self.num_groups):
-            LD_L = torch.cat(tuple(lr_features), 1)    # when idx == 0, lr_features == [x]
-            if idx > 0:
-                LD_L = self.uptranBlocks[idx-1](LD_L)
-            LD_L = self.upPac[idx](LD_L)
+            LD_L = self.upConv[idx](LD_L)
             LD_H = self.prelu(self.upBlocks[idx](LD_L))
-            #LD_H = torch.add(res, LD_H)
-
-            hr_features.append(LD_H)
-
-            LD_H = torch.cat(tuple(hr_features), 1)
-            if idx > 0:
-                LD_H = self.downtranBlocks[idx-1](LD_H)
+            LD_H = torch.add(res_hr, LD_H)
+            res_hr = LD_H
             LD_L = self.downBlocks[idx](LD_H)
-            #LD_L = self.ca(LD_L)
+            LD_L = torch.add(res_lr, LD_L)
+            res_lr = LD_L
 
-            lr_features.append(LD_L)
-
-        del hr_features
-        output = torch.cat(tuple(lr_features[1:]), 1)   # leave out input x, i.e. lr_features[0]
-        output = self.compress_out(output)
-
-        #self.last_hidden = output
-
-        return output
+        return res_lr
 
 
 

@@ -124,17 +124,15 @@ def is_image(filename):
 	return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
 def load_img(filepath, nFrames, scale):
-    seq = [i for i in range(1, nFrames)]
-    target = mod_crop(Image.open(os.path.join(filepath,'im2.png')).convert('RGB'), scale)
-    # target = mod_crop(Image.open(os.path.join(filepath,'im'+str(nFrames)+'.png')).convert('RGB'), scale)
-    input = target.resize((int(target.size[0]/scale),int(target.size[1]/scale)), Image.BICUBIC)
-    frames = [mod_crop(Image.open(os.path.join(filepath,'im'+str(j)+'.png')).convert('RGB'), scale).resize((int(target.size[0]/scale),int(target.size[1]/scale)), Image.BICUBIC) for j in reversed(seq)]
-    frames.insert(0, input)
+    seq = [i for i in range(1, nFrames+1)]
+    frames = [mod_crop(Image.open(os.path.join(filepath,'im'+str(j)+'.png')).convert('RGB'), scale) for j in seq]
+    target = frames[1]
+    frames = [j.resize((int(j.size[0]/scale),int(j.size[1]/scale)), Image.BICUBIC) for j in frames]
     return target, frames
 
 def get_train_set(config):
 
-	train_set = Dataset(config, 'train') #'train')
+	train_set = Dataset(config, 'train')
 	return data.DataLoader(dataset=train_set, batch_size=config['train']['batch_size'], shuffle=config['train']['shuffle'], pin_memory=True)
 	
 def get_test_set(config):

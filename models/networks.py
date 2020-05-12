@@ -12,6 +12,7 @@ import models.modules.srfbn_arch as SRFBN_arch
 import models.modules.DBPN.dbpn as DBPN
 import models.modules.DBPN.dbpns as DBPNS
 import models.modules.SPBP as SPBP
+import models.modules.SPBP_M as SPBP_M
 import models.modules.VDSR as VDSR
 import models.modules.EDSR as EDSR
 import models.modules.ESPCN as ESPCN
@@ -61,6 +62,14 @@ def define_G(config):
 	elif model == 'DBPNS':
 		netG = DBPNS.Net(num_channels=net_config['in_channels'], base_filter=net_config['out_channels'],  feat = net_config['num_features'], 
 			num_stages=net_config['num_blocks'], scale_factor=config['dataset']['scale'])
+	elif model == 'SPBP_M':
+		netG = SPBP_M.SPBP(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
+                                  num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
+                                  upscale_factor=config['dataset']['scale'])
+	elif model == 'SPBP_resnet':
+		netG = SPBP_resnet.SPBP(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
+                                  num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],
+                                  upscale_factor=config['dataset']['scale'])								  
 	elif model == 'SPBP':
 		netG = SPBP.SPBP(in_channels=net_config['in_channels'], out_channels=net_config['out_channels'],
                                   num_features=net_config['num_features'], num_steps=net_config['num_steps'], num_groups=net_config['num_groups'],

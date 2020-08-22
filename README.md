@@ -37,6 +37,9 @@ conda install -c conda-forge pyyaml
 # Install tqdm
 conda install -c conda-forge tqdm
 
+# Install OpenCV
+conda install -c conda-forge opencv
+
 # Install Robust Loss
 pip install git+https://github.com/jonbarron/robust_loss_pytorch
 ```
